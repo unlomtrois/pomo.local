@@ -169,19 +169,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Construct pomodoro entry
+	if err := initCsv("pomodoro.csv"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error initializing pomodoro.csv: %v\n", err)
+		os.Exit(1)
+	}
 
 	startTime := time.Now()
 	stopTime := startTime.Add(time.Duration(duration) * time.Minute)
 	safeTitle := strings.ReplaceAll(title, "'", "'\"'\"'")
 	safeMessage := strings.ReplaceAll(message, "'", "'\"'\"'")
-
 	pomodoro := NewPomodoro(safeTitle, safeMessage, startTime, stopTime, time.Duration(duration)*time.Minute)
-
-	if err := initCsv("pomodoro.csv"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error initializing pomodoro.csv: %v\n", err)
-		os.Exit(1)
-	}
 
 	if err := pomodoro.Save("pomodoro.csv"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error saving pomodoro: %v\n", err)
