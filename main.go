@@ -32,16 +32,16 @@ func main() {
 	// Create the at command with "now + X minutes"
 	atTime := fmt.Sprintf("now + %d minutes", *duration)
 
-	cmd := exec.Command("at", atTime)
+	atCmd := exec.Command("at", atTime)
 
 	// Pipe the notify-send command to at via stdin
-	stdin, err := cmd.StdinPipe()
+	stdin, err := atCmd.StdinPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating stdin pipe: %v\n", err)
 		os.Exit(1)
 	}
 
-	if err := cmd.Start(); err != nil {
+	if err := atCmd.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error starting at command: %v\n", err)
 		os.Exit(1)
 	}
@@ -53,7 +53,7 @@ func main() {
 	}
 	stdin.Close()
 
-	if err := cmd.Wait(); err != nil {
+	if err := atCmd.Wait(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\nMake sure 'at' daemon (atd) is running.\n", err)
 		os.Exit(1)
 	}
