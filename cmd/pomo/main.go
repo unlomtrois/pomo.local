@@ -6,7 +6,6 @@ import (
 	"os"
 	"pomodoro/internal/pomo"
 
-	"strings"
 	"time"
 )
 
@@ -64,11 +63,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	startTime := time.Now()
-	stopTime := startTime.Add(time.Duration(duration) * time.Minute)
-	safeTitle := strings.ReplaceAll(title, "'", "'\"'\"'")
-	safeMessage := strings.ReplaceAll(message, "'", "'\"'\"'")
-	pomodoro := pomo.NewPomodoro(safeTitle, safeMessage, startTime, stopTime, time.Duration(duration)*time.Minute)
+	pomodoro := pomo.NewPomodoro(title, message, time.Duration(duration)*time.Minute)
 
 	if err := pomodoro.Save("pomodoro.csv"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error saving pomodoro: %v\n", err)

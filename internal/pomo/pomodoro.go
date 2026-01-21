@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -22,10 +23,15 @@ type Pomodoro struct { // This thing is saved to csv / database / toggl integrat
 	Duration  time.Duration `csv:"duration"`
 }
 
-func NewPomodoro(title string, message string, startTime time.Time, stopTime time.Time, duration time.Duration) *Pomodoro {
+func NewPomodoro(title string, message string, duration time.Duration) *Pomodoro {
+	startTime := time.Now()
+	stopTime := startTime.Add(duration)
+	safeTitle := strings.ReplaceAll(title, "'", "'\"'\"'")
+	safeMessage := strings.ReplaceAll(message, "'", "'\"'\"'")
+
 	return &Pomodoro{
-		Title:     title,
-		Message:   message,
+		Title:     safeTitle,
+		Message:   safeMessage,
 		StartTime: startTime,
 		StopTime:  stopTime,
 		Duration:  duration,
