@@ -43,7 +43,7 @@ func (p *Pomodoro) Strings() []string {
 
 func (p *Pomodoro) Notify() error {
 	notifyCmd := fmt.Sprintf("DISPLAY=:0 notify-send -u critical '%s' '%s'", p.Title, p.Message)
-	atTime := fmt.Sprintf("now + %d minutes", p.Duration)
+	atTime := fmt.Sprintf("now + %d minutes", int(p.Duration.Minutes()))
 	atCmd := exec.Command("at", atTime)
 
 	// Pipe the notify-send command to at via stdin
