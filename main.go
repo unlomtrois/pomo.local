@@ -121,13 +121,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Calculate the time when the timer should fire
+	// Construct pomodoro entry
 
 	startTime := time.Now()
 	stopTime := startTime.Add(time.Duration(duration) * time.Minute)
-
-	// Build the notify-send command
-	// Escape single quotes in title and message
 	safeTitle := strings.ReplaceAll(title, "'", "'\"'\"'")
 	safeMessage := strings.ReplaceAll(message, "'", "'\"'\"'")
 
