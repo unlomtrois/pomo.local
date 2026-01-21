@@ -72,6 +72,54 @@ func (p *Pomodoro) Notify() error {
 	return nil
 }
 
+func initCsv(filename string) error {
+	if _, err := os.Stat(filename); os.IsExist(err) {
+		return nil
+	}
+
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("Error creating pomodoro.csv: %v\n", err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	if err := writer.Write([]string{"title", "start_time", "stop_time", "duration"}); err != nil {
+		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
+	}
+
+	fmt.Println("Pomodoro csv initialized")
+
+	return nil
+}
+
+func (p *Pomodoro) Save(filename string) error {
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return fmt.Errorf("Error opening pomodoro.csv: %v\n", err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	if err := writer.Write(p.Strings()); err != nil {
+		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
+	}
+
+	fmt.Println("Pomodoro added to csv")
+
+	return nil
+}
+
 func main() {
 	newCmd := flag.NewFlagSet("new", flag.ExitOnError)
 	restCmd := flag.NewFlagSet("rest", flag.ExitOnError)
@@ -130,27 +178,13 @@ func main() {
 
 	pomodoro := NewPomodoro(safeTitle, safeMessage, startTime, stopTime, time.Duration(duration)*time.Minute)
 
-	file, err := os.OpenFile("pomodoro.csv", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating pomodoro.csv: %v\n", err)
+	if err := initCsv("pomodoro.csv"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error initializing pomodoro.csv: %v\n", err)
 		os.Exit(1)
 	}
-	defer file.Close()
 
-	writer := csv.NewWriter(file)
-
-	marchalledPomodoro := pomodoro.Strings()
-	if err := writer.Write(marchalledPomodoro); err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing to pomodoro.csv: %v\n", err)
-		os.Exit(1)
-	} else {
-		fmt.Println("Pomodoro added to csv")
-	}
-
-	writer.Flush()
-	if err := writer.Error(); err != nil {
-		// Handle late-occurring write errors
-		fmt.Fprintf(os.Stderr, "Error writing to pomodoro.csv: %v\n", err)
+	if err := pomodoro.Save("pomodoro.csv"); err != nil {
+		fmt.Fprintf(os.Stderr, "Error saving pomodoro: %v\n", err)
 		os.Exit(1)
 	}
 
