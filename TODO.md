@@ -3,8 +3,8 @@
 - [x] move saving pomodoro csv into separate method
 
 # refactoring
-- [ ] move main to cmd
-- [ ] move pomodoro struct to internal
+- [x] move main to cmd
+- [x] move pomodoro struct to internal
 
 # feature
 - [ ] toggl integration FINISH
