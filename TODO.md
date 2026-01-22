@@ -20,3 +20,4 @@
 - export command
 - `current` command to get active entry
     - (toggle) fn to get current entry
+- `track` command, `stop` command, with `--toggl` flag
