@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"pomodoro/internal/toggl"
+	"strconv"
+	"time"
 )
 
 func main() {
@@ -22,8 +24,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := toggl.AddEntry(token, workspaceId, userId); err != nil {
-		log.Fatalf("Error adding entry: %v", err)
+	workspaceIdInt, err := strconv.Atoi(workspaceId)
+	if err != nil {
+		log.Fatalf("Error converting workspaceId to int: %v", err)
+		os.Exit(1)
+	}
+	userIdInt, err := strconv.Atoi(userId)
+	if err != nil {
+		log.Fatalf("Error converting userId to int: %v", err)
+		os.Exit(1)
+	}
+
+	entry := toggl.NewTogglEntry("7 from pomo.local", time.Now(), time.Now().Add(25*time.Minute), userIdInt, workspaceIdInt)
+	if err := entry.Save(token, workspaceIdInt); err != nil {
+		log.Fatalf("Error saving entry: %v", err)
 		os.Exit(1)
 	}
 }
