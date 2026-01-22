@@ -39,8 +39,8 @@ func NewPomodoro(title string, message string, duration time.Duration) *Pomodoro
 }
 
 func (p *Pomodoro) Strings() []string {
-	startTime := p.StartTime.Format(time.DateTime)
-	stopTime := p.StopTime.Format(time.DateTime)
+	startTime := p.StartTime.Format(time.RFC3339) // in utc
+	stopTime := p.StopTime.Format(time.RFC3339)   // in utc
 	duration := formatDuration(p.Duration)
 	return []string{p.Title, startTime, stopTime, duration}
 }
