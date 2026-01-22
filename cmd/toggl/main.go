@@ -4,9 +4,10 @@ import (
 	"flag"
 	"log"
 	"os"
-	"pomodoro/internal/toggl"
 	"strconv"
 	"time"
+
+	"pomo.local/internal/toggl"
 )
 
 func main() {

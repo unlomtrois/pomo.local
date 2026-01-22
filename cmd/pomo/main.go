@@ -4,7 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"pomodoro/internal/pomo"
+
+	"pomo.local/internal/pomo"
 
 	"time"
 )

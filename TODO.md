@@ -11,7 +11,7 @@
 ## toggl integration
 - [x] fn to add a new entry
 - [x] move it from main to internal
-- [ ] integrate it to main `pomo` package
+- [x] integrate it to main `pomo` package
 
 # backlog
 - simple args parser to be able to set -d in seconds, hours, e.g. 600s, 1h

@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"pomodoro/internal/toggl"
+
 	"strings"
 	"time"
+
+	"pomo.local/internal/toggl"
 )
 
 func formatDuration(d time.Duration) string {
