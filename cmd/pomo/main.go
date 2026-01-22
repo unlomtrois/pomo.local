@@ -16,6 +16,7 @@ func main() {
 	var duration int
 	var title string
 	var message string
+	var saveToCsv bool
 	var noNotify bool
 	var saveInToggl bool
 	var togglToken string
@@ -31,11 +32,12 @@ func main() {
 		fmt.Fprintln(os.Stderr, "  -d duration - Duration in minutes (default: 25 for new, 5 for rest)")
 		fmt.Fprintln(os.Stderr, "  -m message - Notification message (default: Pomodoro finished! Time for a break for new, Break finished! Time for a pomodoro for rest)")
 		fmt.Fprintln(os.Stderr, "  -t title - Notification title (default: Pomodoro Timer for new, Break Timer for rest)")
-		fmt.Fprintln(os.Stderr, "  -toggl - Save in Toggl")
+		fmt.Fprintln(os.Stderr, "  --toggl - Save in Toggl")
+		fmt.Fprintln(os.Stderr, "  --csv - Save to csv")
 		fmt.Fprintln(os.Stderr, "  -n - Don't notify")
-		fmt.Fprintln(os.Stderr, "  -token <token> - Toggl token")
-		fmt.Fprintln(os.Stderr, "  -workspace <workspaceId> - Toggl workspace ID")
-		fmt.Fprintln(os.Stderr, "  -user <userId> - Toggl user ID")
+		fmt.Fprintln(os.Stderr, "  --token <token> - Toggl token")
+		fmt.Fprintln(os.Stderr, "  --workspace <workspaceId> - Toggl workspace ID")
+		fmt.Fprintln(os.Stderr, "  --user <userId> - Toggl user ID")
 	}
 
 	if len(os.Args) < 2 {
@@ -50,6 +52,7 @@ func main() {
 		addCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
 		addCmd.BoolVar(&noNotify, "n", false, "Don't notify")
 		addCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
+		addCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
 		addCmd.StringVar(&togglToken, "token", "", "Toggl token")
 		addCmd.IntVar(&toggleWorkspaceId, "workspace", 0, "Toggl workspace ID")
 		addCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
@@ -70,16 +73,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := pomo.InitCsv("pomodoro.csv"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error initializing pomodoro.csv: %v\n", err)
-		os.Exit(1)
-	}
-
 	pomodoro := pomo.NewPomodoro(title, message, time.Duration(duration)*time.Minute)
 
-	if err := pomodoro.Save("pomodoro.csv"); err != nil {
-		fmt.Fprintf(os.Stderr, "Error saving pomodoro: %v\n", err)
-		os.Exit(1)
+	if saveToCsv {
+		if err := pomo.InitCsv("pomodoro.csv"); err != nil {
+			fmt.Fprintf(os.Stderr, "Error initializing pomodoro.csv: %v\n", err)
+			os.Exit(1)
+		}
+		if err := pomodoro.Save("pomodoro.csv"); err != nil {
+			fmt.Fprintf(os.Stderr, "Error saving pomodoro: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	fmt.Printf("🍅 Pomodoro timer set for %d minutes\n", duration)
