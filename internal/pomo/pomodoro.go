@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"pomodoro/internal/toggl"
 	"strings"
 	"time"
 )
@@ -95,5 +96,13 @@ func (p *Pomodoro) Save(filename string) error {
 
 	fmt.Println("Pomodoro added to csv")
 
+	return nil
+}
+
+func (p *Pomodoro) SaveInToggl(token string, workspaceId int, userId int) error {
+	entry := toggl.NewTogglEntry(p.Title, p.StartTime, p.StopTime, userId, workspaceId)
+	if err := entry.Save(token, workspaceId); err != nil {
+		return fmt.Errorf("Error saving entry: %v", err)
+	}
 	return nil
 }

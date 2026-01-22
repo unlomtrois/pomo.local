@@ -10,24 +10,32 @@ import (
 )
 
 func main() {
-	newCmd := flag.NewFlagSet("new", flag.ExitOnError)
+	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	restCmd := flag.NewFlagSet("rest", flag.ExitOnError)
 
 	var duration int
 	var title string
 	var message string
 	var noNotify bool
+	var saveInToggl bool
+	var togglToken string
+	var toggleWorkspaceId int
+	var toggleUserId int
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options]")
 		fmt.Fprintln(os.Stderr, "Commands:")
-		fmt.Fprintln(os.Stderr, "  new - Set a new pomodoro timer")
+		fmt.Fprintln(os.Stderr, "  add - Set a new pomodoro timer")
 		fmt.Fprintln(os.Stderr, "  rest - Set a rest timer")
 		fmt.Fprintln(os.Stderr, "Options:")
 		fmt.Fprintln(os.Stderr, "  -d duration - Duration in minutes (default: 25 for new, 5 for rest)")
 		fmt.Fprintln(os.Stderr, "  -m message - Notification message (default: Pomodoro finished! Time for a break for new, Break finished! Time for a pomodoro for rest)")
 		fmt.Fprintln(os.Stderr, "  -t title - Notification title (default: Pomodoro Timer for new, Break Timer for rest)")
+		fmt.Fprintln(os.Stderr, "  -toggl - Save in Toggl")
 		fmt.Fprintln(os.Stderr, "  -n - Don't notify")
+		fmt.Fprintln(os.Stderr, "  -token <token> - Toggl token")
+		fmt.Fprintln(os.Stderr, "  -workspace <workspaceId> - Toggl workspace ID")
+		fmt.Fprintln(os.Stderr, "  -user <userId> - Toggl user ID")
 	}
 
 	if len(os.Args) < 2 {
@@ -36,12 +44,16 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "new":
-		newCmd.IntVar(&duration, "d", 25, "Duration in minutes (default: 25)")
-		newCmd.StringVar(&title, "t", "Pomodoro Timer", "Notification title")
-		newCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
-		newCmd.BoolVar(&noNotify, "n", false, "Don't notify")
-		newCmd.Parse(os.Args[2:])
+	case "add":
+		addCmd.IntVar(&duration, "d", 25, "Duration in minutes (default: 25)")
+		addCmd.StringVar(&title, "t", "Pomodoro Timer", "Notification title")
+		addCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
+		addCmd.BoolVar(&noNotify, "n", false, "Don't notify")
+		addCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
+		addCmd.StringVar(&togglToken, "token", "", "Toggl token")
+		addCmd.IntVar(&toggleWorkspaceId, "workspace", 0, "Toggl workspace ID")
+		addCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
+		addCmd.Parse(os.Args[2:])
 	case "rest":
 		restCmd.IntVar(&duration, "d", 5, "Duration in minutes (default: 5)")
 		restCmd.StringVar(&title, "t", "Break Timer", "Notification title")
@@ -71,6 +83,26 @@ func main() {
 	}
 
 	fmt.Printf("🍅 Pomodoro timer set for %d minutes\n", duration)
+
+	if saveInToggl {
+		if togglToken == "" {
+			fmt.Fprintln(os.Stderr, "Error: toggl token is required")
+			os.Exit(1)
+		}
+		if toggleWorkspaceId == 0 {
+			fmt.Fprintln(os.Stderr, "Error: toggl workspace id is required")
+			os.Exit(1)
+		}
+		if toggleUserId == 0 {
+			fmt.Fprintln(os.Stderr, "Error: toggl user id is required")
+			os.Exit(1)
+		}
+		if err := pomodoro.SaveInToggl(togglToken, toggleWorkspaceId, toggleUserId); err != nil {
+			fmt.Fprintf(os.Stderr, "Error saving in Toggl: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Pomodoro saved in Toggl")
+	}
 
 	if noNotify {
 		os.Exit(0)
