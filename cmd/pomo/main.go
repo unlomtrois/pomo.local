@@ -86,8 +86,6 @@ func main() {
 		}
 	}
 
-	fmt.Printf("🍅 Pomodoro timer set for %d minutes\n", duration)
-
 	if saveInToggl {
 		if togglToken == "" {
 			fmt.Fprintln(os.Stderr, "Error: toggl token is required")
@@ -106,6 +104,13 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Println("Pomodoro saved in Toggl")
+	}
+
+	if noNotify && !saveInToggl && !saveToCsv {
+		fmt.Fprintln(os.Stderr, "no action to perform (set --toggl or --csv)")
+		os.Exit(0)
+	} else {
+		fmt.Printf("🍅 Pomodoro timer set for %d minutes\n", duration)
 	}
 
 	if noNotify {
