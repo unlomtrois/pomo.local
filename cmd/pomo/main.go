@@ -34,7 +34,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "  -t title - Notification title (default: Pomodoro Timer for new, Break Timer for rest)")
 		fmt.Fprintln(os.Stderr, "  --toggl - Save in Toggl")
 		fmt.Fprintln(os.Stderr, "  --csv - Save to csv")
-		fmt.Fprintln(os.Stderr, "  -n - Don't notify")
+		fmt.Fprintln(os.Stderr, "  --no-notify - Don't notify")
 		fmt.Fprintln(os.Stderr, "  --token <token> - Toggl token")
 		fmt.Fprintln(os.Stderr, "  --workspace <workspaceId> - Toggl workspace ID")
 		fmt.Fprintln(os.Stderr, "  --user <userId> - Toggl user ID")
@@ -45,12 +45,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	switch os.Args[1] {
+	switch os.Args[1] { // todo: refactor
 	case "add":
 		addCmd.IntVar(&duration, "d", 25, "Duration in minutes (default: 25)")
 		addCmd.StringVar(&title, "t", "Pomodoro Timer", "Notification title")
 		addCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
-		addCmd.BoolVar(&noNotify, "n", false, "Don't notify")
+		addCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
 		addCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
 		addCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
 		addCmd.StringVar(&togglToken, "token", "", "Toggl token")
@@ -60,8 +60,13 @@ func main() {
 	case "rest":
 		restCmd.IntVar(&duration, "d", 5, "Duration in minutes (default: 5)")
 		restCmd.StringVar(&title, "t", "Break Timer", "Notification title")
+		restCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
+		restCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
 		restCmd.StringVar(&message, "m", "Break finished! Time for a pomodoro.", "Notification message")
-		restCmd.BoolVar(&noNotify, "n", false, "Don't notify")
+		restCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
+		restCmd.StringVar(&togglToken, "token", "", "Toggl token")
+		restCmd.IntVar(&toggleWorkspaceId, "workspace", 0, "Toggl workspace ID")
+		restCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
 		restCmd.Parse(os.Args[2:])
 	default:
 		flag.Usage()
@@ -114,6 +119,7 @@ func main() {
 	}
 
 	if noNotify {
+		fmt.Println("No notification")
 		os.Exit(0)
 	}
 
