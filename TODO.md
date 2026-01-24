@@ -22,3 +22,4 @@
     - (toggle) fn to get current entry
 - `track` command, `stop` command, with `--toggl` flag
 - add `--markdown <pomodoro.md>` flag to export to markdown
+- add `--version` flag
