@@ -19,7 +19,7 @@ func main() {
 		log.Println("Warning: running development build")
 	}
 
-	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
+	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	restCmd := flag.NewFlagSet("rest", flag.ExitOnError)
 
 	var duration int
@@ -36,7 +36,7 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options]")
 		fmt.Fprintln(os.Stderr, "Commands:")
-		fmt.Fprintln(os.Stderr, "  add - Set a new pomodoro timer")
+		fmt.Fprintln(os.Stderr, "  start - Set a new pomodoro timer")
 		fmt.Fprintln(os.Stderr, "  rest - Set a rest timer")
 		fmt.Fprintln(os.Stderr, "Options:")
 		fmt.Fprintln(os.Stderr, "  -d duration - Duration in minutes (default: 25 for new, 5 for rest)")
@@ -57,17 +57,17 @@ func main() {
 	}
 
 	switch os.Args[1] { // todo: refactor
-	case "add":
-		addCmd.IntVar(&duration, "d", 25, "Duration in minutes (default: 25)")
-		addCmd.StringVar(&title, "t", "Pomodoro Timer", "Notification title")
-		addCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
-		addCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
-		addCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
-		addCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
-		addCmd.StringVar(&togglToken, "token", "", "Toggl token")
-		addCmd.IntVar(&toggleWorkspaceId, "workspace", 0, "Toggl workspace ID")
-		addCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
-		addCmd.Parse(os.Args[2:])
+	case "start":
+		startCmd.IntVar(&duration, "d", 25, "Duration in minutes (default: 25)")
+		startCmd.StringVar(&title, "t", "Pomodoro Timer", "Notification title")
+		startCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
+		startCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
+		startCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
+		startCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
+		startCmd.StringVar(&togglToken, "token", "", "Toggl token")
+		startCmd.IntVar(&toggleWorkspaceId, "workspace", 0, "Toggl workspace ID")
+		startCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
+		startCmd.Parse(os.Args[2:])
 	case "rest":
 		restCmd.IntVar(&duration, "d", 5, "Duration in minutes (default: 5)")
 		restCmd.StringVar(&title, "t", "Break Timer", "Notification title")
