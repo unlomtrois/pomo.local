@@ -20,7 +20,11 @@
 - [x] make -d accept duration in seconds, minutes, hours, e.g. 3600s, 60m, 1h
 
 # feature
-- [ ] add playing sound on notify, and --mute flag to disable sound
+
+## playing sounds
+- [x] add default hint for notify-send
+- [ ] add `--mute` flag to disable sounds, overrides default hint
+- [ ] add `--notify-sound` that overrides default hint with `string:sound-file:<filepath>`
 
 # backlog
 - mdns server, maybe daemon
