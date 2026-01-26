@@ -13,6 +13,9 @@
 - [x] move it from main to internal
 - [x] integrate it to main `pomo` package
 
+# feature
+- [ ] add `--version` flag
+
 # backlog
 - simple args parser to be able to set -d in seconds, hours, e.g. 600s, 1h
 - mdns server, maybe daemon
@@ -22,4 +25,3 @@
     - (toggle) fn to get current entry
 - `track` command, `stop` command, with `--toggl` flag
 - add `--markdown <pomodoro.md>` flag to export to markdown
-- add `--version` flag
