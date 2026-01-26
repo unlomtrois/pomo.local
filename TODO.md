@@ -16,8 +16,10 @@
 # feature
 - [x] add `--version` flag
 
+# feature
+- make -d accept duration in seconds, minutes, hours, e.g. 3600s, 60m, 1h
+
 # backlog
-- simple args parser to be able to set -d in seconds, hours, e.g. 600s, 1h
 - mdns server, maybe daemon
 - obsidian markdown integration (provide obsidian links where to export?)
 - export command

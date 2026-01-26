@@ -22,7 +22,7 @@ func main() {
 	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
 	restCmd := flag.NewFlagSet("rest", flag.ExitOnError)
 
-	var duration int
+	var duration time.Duration
 	var title string
 	var message string
 	var saveToCsv bool
@@ -39,7 +39,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "  start - Set a new pomodoro timer")
 		fmt.Fprintln(os.Stderr, "  rest - Set a rest timer")
 		fmt.Fprintln(os.Stderr, "Options:")
-		fmt.Fprintln(os.Stderr, "  -d duration - Duration in minutes (default: 25 for new, 5 for rest)")
+		fmt.Fprintln(os.Stderr, "  -d duration - Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".")
 		fmt.Fprintln(os.Stderr, "  -m message - Notification message (default: Pomodoro finished! Time for a break for new, Break finished! Time for a pomodoro for rest)")
 		fmt.Fprintln(os.Stderr, "  -t title - Notification title (default: Pomodoro Timer for new, Break Timer for rest)")
 		fmt.Fprintln(os.Stderr, "  --toggl - Save in Toggl")
@@ -58,7 +58,7 @@ func main() {
 
 	switch os.Args[1] { // todo: refactor
 	case "start":
-		startCmd.IntVar(&duration, "d", 25, "Duration in minutes (default: 25)")
+		startCmd.DurationVar(&duration, "d", 25, "Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".")
 		startCmd.StringVar(&title, "t", "Pomodoro Timer", "Notification title")
 		startCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
 		startCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
@@ -69,7 +69,7 @@ func main() {
 		startCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
 		startCmd.Parse(os.Args[2:])
 	case "rest":
-		restCmd.IntVar(&duration, "d", 5, "Duration in minutes (default: 5)")
+		restCmd.DurationVar(&duration, "d", 5, "Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".")
 		restCmd.StringVar(&title, "t", "Break Timer", "Notification title")
 		restCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
 		restCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
@@ -98,7 +98,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	pomodoro := pomo.NewPomodoro(title, message, time.Duration(duration)*time.Minute)
+	pomodoro := pomo.NewPomodoro(title, message, duration)
 
 	if saveToCsv {
 		if err := pomo.InitCsv("pomodoro.csv"); err != nil {
@@ -135,7 +135,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "no action to perform (set --toggl or --csv)")
 		os.Exit(0)
 	} else {
-		fmt.Printf("🍅 Pomodoro timer set for %d minutes\n", duration)
+		fmt.Printf("🍅 Pomodoro timer set for %s\n", duration.String()) // todo: perhaps make it to say 25 minutes instead of 25m0s
 	}
 
 	if noNotify {
