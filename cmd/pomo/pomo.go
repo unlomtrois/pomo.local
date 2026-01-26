@@ -59,7 +59,7 @@ func main() {
 
 	switch os.Args[1] { // todo: refactor
 	case "start":
-		startCmd.DurationVar(&duration, "d", 25, "Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".")
+		startCmd.DurationVar(&duration, "d", 25*time.Minute, "Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".")
 		startCmd.StringVar(&title, "t", "Pomodoro Timer", "Notification title")
 		startCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
 		startCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
