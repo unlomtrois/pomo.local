@@ -2,18 +2,26 @@
 
 basically a wrapper around libnotify (`notify-send`) and `at` utilities.
 
+## build
+
 ```sh
-go build
+make build # notice it bakes git version to main.version
+```
+
+## just start
+
+```sh
+pomo start
 ```
 
 ## save to csv
 
 ```sh
-pomo add -t "focus" --csv 
+pomo start -t "focus" --csv 
 ```
 
 ## save to toggl
 
 ```
-pomo add -t "focus" --toggl --token <t> --workspace <w> --user <u> 
+pomo start -t "focus" --toggl --token <t> --workspace <w> --user <u> 
 ```
