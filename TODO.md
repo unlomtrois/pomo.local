@@ -31,3 +31,4 @@
 - `track` command, `stop` command, with `--toggl` flag
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - make `start` command to accept positional string arg, e.g. `pomo start "focus"`
+- pomo `notify` command that talks with libnotify libnotify directly, and executable schedules itself `pomo notify ... | at ...`
