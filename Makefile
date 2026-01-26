@@ -1,10 +1,15 @@
+VERSION ?= $(shell git describe --tags --always || echo "dev")
 
-VERSION := $(shell git describe --always)
+MAIN_PATH = ./cmd/pomo/main.go
+BINARY_NAME = pomo
 
-all: build test
+.PHONY: build install clean
 
 build:
-	go build -o pomo -ldflags="-X main.version=$(VERSION)" cmd/pomo/main.go
+	go build -o $(BINARY_NAME) -ldflags="-X main.version=$(VERSION)" $(MAIN_PATH)
 
-test:
-	go test ./...
+install:
+	go install -ldflags="-X main.version=$(VERSION)" $(MAIN_PATH)
+
+clean:
+	rm -f $(BINARY_NAME)
