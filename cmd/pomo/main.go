@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"pomo.local/internal/pomo"
@@ -10,10 +11,14 @@ import (
 	"time"
 )
 
-// -X main.version=$(VERSION) in makefile fills it
-var version string = "undefined"
+// it is filled by -ldflags="-X main.version=$(VERSION)"" in makefile
+var version string = "dev"
 
 func main() {
+	if version == "dev" {
+		log.Println("Warning: running development build")
+	}
+
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	restCmd := flag.NewFlagSet("rest", flag.ExitOnError)
 
