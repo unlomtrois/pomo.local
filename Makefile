@@ -1,6 +1,6 @@
 VERSION ?= $(shell git describe --tags --always || echo "dev")
 
-MAIN_PATH = ./cmd/pomo/main.go
+MAIN_PATH = ./cmd/pomo/pomo.go
 BINARY_NAME = pomo
 
 .PHONY: build install clean
