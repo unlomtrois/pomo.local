@@ -1,9 +1,10 @@
-.PHONY: all build test
+
+VERSION := $(shell git describe --always)
 
 all: build test
 
 build:
-	go build -o bin/pomo cmd/pomo/main.go
+	go build -o bin/pomo -ldflags="-X main.version=$(VERSION)" cmd/pomo/main.go
 
 test:
 	go test ./...

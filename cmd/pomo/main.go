@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+// -X main.version=$(VERSION) in makefile fills it
+var version string = "undefined"
+
 func main() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	restCmd := flag.NewFlagSet("rest", flag.ExitOnError)
@@ -23,6 +26,7 @@ func main() {
 	var togglToken string
 	var toggleWorkspaceId int
 	var toggleUserId int
+	var showVersion bool
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options]")
@@ -39,6 +43,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "  --token <token> - Toggl token")
 		fmt.Fprintln(os.Stderr, "  --workspace <workspaceId> - Toggl workspace ID")
 		fmt.Fprintln(os.Stderr, "  --user <userId> - Toggl user ID")
+		fmt.Fprintln(os.Stderr, "  --version - shows current version")
 	}
 
 	if len(os.Args) < 2 {
@@ -70,8 +75,17 @@ func main() {
 		restCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
 		restCmd.Parse(os.Args[2:])
 	default:
-		flag.Usage()
-		os.Exit(1)
+		flag.BoolVar(&showVersion, "version", false, "--version - show current version")
+		flag.Parse()
+		if !showVersion {
+			flag.Usage()
+			os.Exit(1)
+		}
+	}
+
+	if showVersion {
+		fmt.Fprintln(os.Stderr, version)
+		os.Exit(0)
 	}
 
 	if duration <= 0 {

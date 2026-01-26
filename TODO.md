@@ -14,7 +14,7 @@
 - [x] integrate it to main `pomo` package
 
 # feature
-- [ ] add `--version` flag
+- [x] add `--version` flag
 
 # backlog
 - simple args parser to be able to set -d in seconds, hours, e.g. 600s, 1h
