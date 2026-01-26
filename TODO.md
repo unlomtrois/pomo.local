@@ -17,7 +17,7 @@
 - [x] add `--version` flag
 
 # feature
-- make -d accept duration in seconds, minutes, hours, e.g. 3600s, 60m, 1h
+- [x] make -d accept duration in seconds, minutes, hours, e.g. 3600s, 60m, 1h
 
 # backlog
 - mdns server, maybe daemon
