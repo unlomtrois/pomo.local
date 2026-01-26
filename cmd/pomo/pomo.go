@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"pomo.local/internal/pomo"
+	"pomo.local/internal/utils"
 
 	"time"
 )
@@ -135,7 +136,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "no action to perform (set --toggl or --csv)")
 		os.Exit(0)
 	} else {
-		fmt.Printf("🍅 Pomodoro timer set for %s\n", duration.String()) // todo: perhaps make it to say 25 minutes instead of 25m0s
+		fmt.Printf("🍅 Pomodoro timer set for %s\n", utils.ShortDuration(duration)) // todo: perhaps make it to say 25 minutes instead of 25m
 	}
 
 	if noNotify {
