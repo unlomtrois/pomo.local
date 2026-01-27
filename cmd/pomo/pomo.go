@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"pomo.local/internal/pomo"
 	"pomo.local/internal/utils"
@@ -33,6 +34,7 @@ func main() {
 	var togglToken string
 	var toggleWorkspaceId int
 	var toggleUserId int
+	var notifySound string
 	var showVersion bool
 
 	flag.Usage = func() {
@@ -48,6 +50,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "  --csv - Save to csv")
 		fmt.Fprintln(os.Stderr, "  --no-notify - Don't notify")
 		fmt.Fprintln(os.Stderr, "  --mute - Mute notify sound")
+		fmt.Fprintln(os.Stderr, "  --notify-sound <path/to/sound> - Notify sound")
 		fmt.Fprintln(os.Stderr, "  --token <token> - Toggl token")
 		fmt.Fprintln(os.Stderr, "  --workspace <workspaceId> - Toggl workspace ID")
 		fmt.Fprintln(os.Stderr, "  --user <userId> - Toggl user ID")
@@ -66,6 +69,7 @@ func main() {
 		startCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
 		startCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
 		startCmd.BoolVar(&muteNotifySound, "mute", false, "Mute notify sound")
+		startCmd.StringVar(&notifySound, "notify-sound", "", "Notify sound")
 		startCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
 		startCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
 		startCmd.StringVar(&togglToken, "token", "", "Toggl token")
@@ -80,6 +84,7 @@ func main() {
 		restCmd.StringVar(&message, "m", "Break finished! Time for a pomodoro.", "Notification message")
 		restCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
 		restCmd.BoolVar(&muteNotifySound, "mute", false, "Mute notify sound")
+		restCmd.StringVar(&notifySound, "notify-sound", "", "Notify sound")
 		restCmd.StringVar(&togglToken, "token", "", "Toggl token")
 		restCmd.IntVar(&toggleWorkspaceId, "workspace", 0, "Toggl workspace ID")
 		restCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
@@ -148,7 +153,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	if err := pomodoro.Notify(muteNotifySound); err != nil {
+	notifySound = filepath.Clean(notifySound)
+	if notifySound != "" {
+		fmt.Println("Using custom notify sound:", notifySound)
+	}
+	_, err := os.Stat(notifySound)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: notify sound file does not exist: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := pomodoro.Notify(muteNotifySound, notifySound); err != nil {
 		fmt.Fprintf(os.Stderr, "Error notifying: %v\n", err)
 		os.Exit(1)
 	}

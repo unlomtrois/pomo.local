@@ -50,10 +50,14 @@ func (p *Pomodoro) Strings() []string {
 
 var DefaultHint = "string:sound-name:complete" // XDG Sound Theme spec
 
-func (p *Pomodoro) Notify(muteNotifySound bool) error {
+func (p *Pomodoro) Notify(muteNotifySound bool, notifySoundFile string) error {
 	var Hint = DefaultHint
 	if muteNotifySound {
 		Hint = "boolean:suppress-sound:true"
+	}
+
+	if notifySoundFile != "" {
+		Hint = fmt.Sprintf("string:sound-file:%s", notifySoundFile)
 	}
 
 	notifyCmd := fmt.Sprintf("DISPLAY=:0 notify-send -u critical '%s' '%s' --hint=\"%s\"", p.Title, p.Message, Hint)

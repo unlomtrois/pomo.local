@@ -22,7 +22,7 @@
 ## playing sounds
 - [x] add default hint for notify-send
 - [x] add `--mute` flag to disable sounds, overrides default hint
-- [ ] add `--notify-sound` that overrides default hint with `string:sound-file:<filepath>`
+- [x] add `--notify-sound` that overrides default hint with `string:sound-file:<filepath>`
 
 # backlog
 - mdns server, maybe daemon
