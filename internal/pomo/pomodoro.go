@@ -50,8 +50,13 @@ func (p *Pomodoro) Strings() []string {
 
 var DefaultHint = "string:sound-name:complete" // XDG Sound Theme spec
 
-func (p *Pomodoro) Notify() error {
-	notifyCmd := fmt.Sprintf("DISPLAY=:0 notify-send -u critical '%s' '%s' --hint=\"%s\"", p.Title, p.Message, DefaultHint)
+func (p *Pomodoro) Notify(muteNotifySound bool) error {
+	var Hint = DefaultHint
+	if muteNotifySound {
+		Hint = "boolean:suppress-sound:true"
+	}
+
+	notifyCmd := fmt.Sprintf("DISPLAY=:0 notify-send -u critical '%s' '%s' --hint=\"%s\"", p.Title, p.Message, Hint)
 	atTime := fmt.Sprintf("now + %d minutes", int(p.Duration.Minutes())) // todo: perhaps this blocks me from setting for 10 seconds, and runs automatically
 	atCmd := exec.Command("at", atTime)
 

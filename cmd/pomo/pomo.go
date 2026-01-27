@@ -28,6 +28,7 @@ func main() {
 	var message string
 	var saveToCsv bool
 	var noNotify bool
+	var muteNotifySound bool
 	var saveInToggl bool
 	var togglToken string
 	var toggleWorkspaceId int
@@ -46,6 +47,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "  --toggl - Save in Toggl")
 		fmt.Fprintln(os.Stderr, "  --csv - Save to csv")
 		fmt.Fprintln(os.Stderr, "  --no-notify - Don't notify")
+		fmt.Fprintln(os.Stderr, "  --mute - Mute notify sound")
 		fmt.Fprintln(os.Stderr, "  --token <token> - Toggl token")
 		fmt.Fprintln(os.Stderr, "  --workspace <workspaceId> - Toggl workspace ID")
 		fmt.Fprintln(os.Stderr, "  --user <userId> - Toggl user ID")
@@ -63,6 +65,7 @@ func main() {
 		startCmd.StringVar(&title, "t", "Pomodoro Timer", "Notification title")
 		startCmd.StringVar(&message, "m", "Pomodoro finished! Time for a break.", "Notification message")
 		startCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
+		startCmd.BoolVar(&muteNotifySound, "mute", false, "Mute notify sound")
 		startCmd.BoolVar(&saveInToggl, "toggl", false, "Save in Toggl")
 		startCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
 		startCmd.StringVar(&togglToken, "token", "", "Toggl token")
@@ -76,6 +79,7 @@ func main() {
 		restCmd.BoolVar(&saveToCsv, "csv", false, "Save to csv")
 		restCmd.StringVar(&message, "m", "Break finished! Time for a pomodoro.", "Notification message")
 		restCmd.BoolVar(&noNotify, "no-notify", false, "Don't notify")
+		restCmd.BoolVar(&muteNotifySound, "mute", false, "Mute notify sound")
 		restCmd.StringVar(&togglToken, "token", "", "Toggl token")
 		restCmd.IntVar(&toggleWorkspaceId, "workspace", 0, "Toggl workspace ID")
 		restCmd.IntVar(&toggleUserId, "user", 0, "Toggl user ID")
@@ -144,7 +148,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if err := pomodoro.Notify(); err != nil {
+	if err := pomodoro.Notify(muteNotifySound); err != nil {
 		fmt.Fprintf(os.Stderr, "Error notifying: %v\n", err)
 		os.Exit(1)
 	}

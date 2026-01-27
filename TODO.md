@@ -7,7 +7,6 @@
 - [x] move pomodoro struct to internal
 
 # feature
-
 ## toggl integration
 - [x] fn to add a new entry
 - [x] move it from main to internal
@@ -20,10 +19,9 @@
 - [x] make -d accept duration in seconds, minutes, hours, e.g. 3600s, 60m, 1h
 
 # feature
-
 ## playing sounds
 - [x] add default hint for notify-send
-- [ ] add `--mute` flag to disable sounds, overrides default hint
+- [x] add `--mute` flag to disable sounds, overrides default hint
 - [ ] add `--notify-sound` that overrides default hint with `string:sound-file:<filepath>`
 
 # backlog
