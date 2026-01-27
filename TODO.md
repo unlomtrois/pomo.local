@@ -27,6 +27,9 @@
 # feature
 - [x] make `start` & `rest` commands to accept positional arg, e.g. `pomo start "focus"` and `pomo rest "break"`
 
+# fix
+- [x] fix `pomo --help` printing only `--version` help 
+
 # backlog
 - add mdns server, maybe daemon
 - add obsidian markdown integration (provide obsidian links where to export?)
@@ -37,12 +40,3 @@
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - pomo `notify` command that talks with libnotify libnotify directly, and executable schedules itself `pomo notify ... | at ...`
 - consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)
-## bug
-- fix `pomo --help` without command specified printing only: 
-```
-Usage of pomo:
-  -version
-        Show current version
-```
-
-it should print the entire usage message.

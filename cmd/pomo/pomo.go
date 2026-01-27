@@ -163,12 +163,12 @@ func main() {
 
 	default:
 		flag.BoolVar(&cfg.ShowVersion, "version", false, "Show current version")
+		flag.Usage = printUsage
 		flag.Parse()
 		if cfg.ShowVersion {
 			fmt.Fprintln(os.Stderr, version)
 			os.Exit(0)
 		}
-		printUsage()
 		os.Exit(1)
 	}
 
