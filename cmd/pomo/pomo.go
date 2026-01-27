@@ -153,14 +153,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	notifySound = filepath.Clean(notifySound)
 	if notifySound != "" {
 		fmt.Println("Using custom notify sound:", notifySound)
-	}
-	_, err := os.Stat(notifySound)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: notify sound file does not exist: %v\n", err)
-		os.Exit(1)
+		notifySound = filepath.Clean(notifySound)
+		_, err := os.Stat(notifySound)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: notify sound file does not exist: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if err := pomodoro.Notify(muteNotifySound, notifySound); err != nil {
