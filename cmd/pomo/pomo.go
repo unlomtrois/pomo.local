@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -128,10 +127,6 @@ func printUsage() {
 }
 
 func main() {
-	if version == "dev" {
-		log.Println("Warning: running development build")
-	}
-
 	if len(os.Args) < 2 {
 		printUsage()
 		os.Exit(1)
