@@ -17,11 +17,11 @@ pomo start
 ## save to csv
 
 ```sh
-pomo start -t "focus" --csv 
+pomo start --csv "focus" 
 ```
 
 ## save to toggl
 
-```
-pomo start -t "focus" --toggl --token <t> --workspace <w> --user <u> 
+```sh
+pomo start --toggl --token <t> --workspace <w> --user <u> "focus" 
 ```

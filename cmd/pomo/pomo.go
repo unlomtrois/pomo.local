@@ -107,7 +107,7 @@ func run(cfg *Config) {
 }
 
 func printUsage() {
-	fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options]")
+	fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options] \"your current focus\" ")
 	fmt.Fprintln(os.Stderr, "Commands:")
 	fmt.Fprintln(os.Stderr, "  start - Set a new pomodoro timer")
 	fmt.Fprintln(os.Stderr, "  rest - Set a rest timer")
@@ -138,18 +138,28 @@ func main() {
 	case "start":
 		fs := flag.NewFlagSet("start", flag.ExitOnError)
 		fs.DurationVar(&cfg.Duration, "d", 25*time.Minute, "Timer duration")
-		fs.StringVar(&cfg.Title, "t", "Pomodoro Timer", "Notification title")
 		fs.StringVar(&cfg.Message, "m", "Pomodoro finished! Time for a break.", "Notification message")
 		registerCommonFlags(fs, cfg)
 		fs.Parse(os.Args[2:])
 
+		if fs.NArg() > 0 {
+			cfg.Title = fs.Arg(0)
+		} else {
+			cfg.Title = "focus"
+		}
+
 	case "rest":
 		fs := flag.NewFlagSet("rest", flag.ExitOnError)
 		fs.DurationVar(&cfg.Duration, "d", 5*time.Minute, "Timer duration")
-		fs.StringVar(&cfg.Title, "t", "Break Timer", "Notification title")
 		fs.StringVar(&cfg.Message, "m", "Break finished! Time for a pomodoro.", "Notification message")
 		registerCommonFlags(fs, cfg)
 		fs.Parse(os.Args[2:])
+
+		if fs.NArg() > 0 {
+			cfg.Title = fs.Arg(0)
+		} else {
+			cfg.Title = "break"
+		}
 
 	default:
 		flag.BoolVar(&cfg.ShowVersion, "version", false, "Show current version")
