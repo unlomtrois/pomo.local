@@ -40,3 +40,4 @@
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - pomo `notify` command that talks with libnotify libnotify directly, and executable schedules itself `pomo notify ... | at ...`
 - consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)
+- add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
