@@ -25,9 +25,9 @@
 - [x] add `--notify-sound` that overrides default hint with `string:sound-file:<filepath>`
 
 # backlog
-- mdns server, maybe daemon
-- obsidian markdown integration (provide obsidian links where to export?)
-- export command
+- add mdns server, maybe daemon
+- add obsidian markdown integration (provide obsidian links where to export?)
+- add `export` command
 - `current` command to get active entry
     - (toggle) fn to get current entry
 - `track` command, `stop` command, with `--toggl` flag
