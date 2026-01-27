@@ -34,3 +34,4 @@
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - make `start` command to accept positional string arg, e.g. `pomo start "focus"`
 - pomo `notify` command that talks with libnotify libnotify directly, and executable schedules itself `pomo notify ... | at ...`
+- consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)
