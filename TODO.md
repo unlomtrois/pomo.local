@@ -30,14 +30,19 @@
 # fix
 - [x] fix `pomo --help` printing only `--version` help 
 
+# todo
+- add `sleep` into pipe to support second precision
+- save configs into ~/.local
+
+---
+
 # backlog
 - add mdns server, maybe daemon
 - add obsidian markdown integration (provide obsidian links where to export?)
 - add `export` command
-- `current` command to get active entry
-    - (toggle) fn to get current entry
-- `track` command, `stop` command, with `--toggl` flag
+- add `current` command to get the active entry
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - pomo `notify` command that talks with libnotify libnotify directly, and executable schedules itself `pomo notify ... | at ...`
 - consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
+- I don't like that adding options after positional string does no work. e.g. `pomo start "somethind" -d 15m` -> -d 15 does not work and duration is defaulted to 25minutes
