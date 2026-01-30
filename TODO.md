@@ -31,10 +31,10 @@
 - [x] fix `pomo --help` printing only `--version` help 
 
 # feat
-- add `sleep` into pipe to support second precision
+- [x] add `sleep` into pipe to support second precision
 
-# todo
-- save configs into ~/.local
+# feat
+- [x] save configs into ~/.local
 
 ---
 

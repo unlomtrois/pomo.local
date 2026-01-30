@@ -34,11 +34,11 @@ func fatal(format string, args ...any) {
 
 // run executes the pomodoro timer with the given configuration
 func run(cfg *CLIConfig) {
-	if cfg.Duration < 5*time.Minute {
+	if cfg.Timer.Duration < 5*time.Minute {
 		fatal("please, focus more than 5 minutes")
 	}
 
-	pomodoro := pomo.NewPomodoro(cfg.Title, cfg.Message, cfg.Duration)
+	pomodoro := pomo.NewPomodoro(cfg.Timer.Title, cfg.Timer.Message, cfg.Timer.Duration)
 
 	if cfg.SaveToCsv {
 		if err := pomo.InitCsv("pomodoro.csv"); err != nil {
@@ -49,43 +49,43 @@ func run(cfg *CLIConfig) {
 		}
 	}
 
-	if cfg.SaveInToggl {
-		if cfg.TogglToken == "" {
+	if cfg.Toggl.Enabled {
+		if cfg.Toggl.Token == "" {
 			fatal("Error: toggl token is required")
 		}
-		if cfg.TogglWorkspaceID == 0 {
+		if cfg.Toggl.WorkspaceID == 0 {
 			fatal("Error: toggl workspace id is required")
 		}
-		if cfg.TogglUserID == 0 {
+		if cfg.Toggl.UserID == 0 {
 			fatal("Error: toggl user id is required")
 		}
-		if err := pomodoro.SaveInToggl(cfg.TogglToken, cfg.TogglWorkspaceID, cfg.TogglUserID); err != nil {
+		if err := pomodoro.SaveInToggl(cfg.Toggl.Token, cfg.Toggl.WorkspaceID, cfg.Toggl.UserID); err != nil {
 			fatal("Error saving in Toggl: %v", err)
 		}
 		fmt.Println("Pomodoro saved in Toggl")
 	}
 
-	if cfg.NoNotify && !cfg.SaveInToggl && !cfg.SaveToCsv {
+	if cfg.Notifications.Disabled && !cfg.Toggl.Enabled && !cfg.SaveToCsv {
 		fmt.Fprintln(os.Stderr, "no action to perform (set --toggl or --csv)")
 		os.Exit(0)
 	}
 
-	fmt.Printf("🍅 Pomodoro timer set for %s\n", utils.ShortDuration(cfg.Duration))
+	fmt.Printf("🍅 Pomodoro timer set for %s\n", utils.ShortDuration(cfg.Timer.Duration))
 
-	if cfg.NoNotify {
+	if cfg.Notifications.Disabled {
 		fmt.Println("No notification")
 		os.Exit(0)
 	}
 
-	if cfg.NotifySound != "" {
-		fmt.Println("Using custom notify sound:", cfg.NotifySound)
-		cfg.NotifySound = filepath.Clean(cfg.NotifySound)
-		if _, err := os.Stat(cfg.NotifySound); err != nil {
+	if cfg.Notifications.Sound != "" {
+		fmt.Println("Using custom notify sound:", cfg.Notifications.Sound)
+		cfg.Notifications.Sound = filepath.Clean(cfg.Notifications.Sound)
+		if _, err := os.Stat(cfg.Notifications.Sound); err != nil {
 			fatal("Error: notify sound file does not exist: %v", err)
 		}
 	}
 
-	if err := pomodoro.Notify(cfg.MuteNotifySound, cfg.NotifySound); err != nil {
+	if err := pomodoro.Notify(cfg.Notifications.Mute, cfg.Notifications.Sound); err != nil {
 		fatal("Error notifying: %v", err)
 	}
 }
@@ -96,16 +96,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg := &CLIConfig{}
-
 	log.Println("DataDir:", dataDir)
 	log.Println("ConfigDir:", configDir)
 
+	// Load file config (creates default if not exists)
+	fileCfg, err := pomo.LoadConfig(configDir)
+	if err != nil {
+		fatal("Error loading config: %v", err)
+	}
+
+	cfg := &CLIConfig{}
+
 	switch os.Args[1] {
 	case "start":
-		parseStartCommand(cfg)
+		parseStartCommand(cfg, fileCfg)
 	case "rest":
-		parseRestCommand(cfg)
+		parseRestCommand(cfg, fileCfg)
 	default:
 		if parseVersionFlag() {
 			fmt.Fprintln(os.Stderr, version)

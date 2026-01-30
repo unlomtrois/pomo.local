@@ -5,63 +5,102 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"pomo.local/internal/pomo"
 )
 
 // CLIConfig holds all CLI configuration options
 type CLIConfig struct {
-	Duration         time.Duration
-	Title            string
-	Message          string
-	SaveToCsv        bool
-	NoNotify         bool
-	MuteNotifySound  bool
-	SaveInToggl      bool
-	TogglToken       string
-	TogglWorkspaceID int
-	TogglUserID      int
-	NotifySound      string
-	ShowVersion      bool
+	Timer struct {
+		Duration time.Duration
+		Title    string
+		Message  string
+	}
+	Toggl struct {
+		Enabled     bool
+		Token       string
+		WorkspaceID int
+		UserID      int
+	}
+	Notifications struct {
+		Disabled bool
+		Mute     bool
+		Sound    string
+	}
+	SaveToCsv   bool
+	ShowVersion bool
 }
 
 // registerCommonFlags registers flags shared between start and rest commands
-func registerCommonFlags(fs *flag.FlagSet, cfg *CLIConfig) {
-	fs.BoolVar(&cfg.NoNotify, "no-notify", false, "Don't notify")
-	fs.BoolVar(&cfg.MuteNotifySound, "mute", false, "Mute notify sound")
-	fs.StringVar(&cfg.NotifySound, "notify-sound", "", "Notify sound")
-	fs.BoolVar(&cfg.SaveInToggl, "toggl", false, "Save in Toggl")
+func registerCommonFlags(fs *flag.FlagSet, cfg *CLIConfig, fileCfg *pomo.FileConfig) {
+	// Notifications
+	fs.BoolVar(&cfg.Notifications.Disabled, "no-notify", false, "Don't notify")
+	fs.BoolVar(&cfg.Notifications.Mute, "mute", fileCfg.Notifications.Mute, "Mute notify sound")
+	fs.StringVar(&cfg.Notifications.Sound, "notify-sound", fileCfg.Notifications.Sound, "Notify sound")
+	// Toggl
+	fs.BoolVar(&cfg.Toggl.Enabled, "toggl", false, "Save in Toggl")
+	fs.StringVar(&cfg.Toggl.Token, "token", fileCfg.Toggl.Token, "Toggl token")
+	fs.IntVar(&cfg.Toggl.WorkspaceID, "workspace", fileCfg.Toggl.WorkspaceID, "Toggl workspace ID")
+	fs.IntVar(&cfg.Toggl.UserID, "user", fileCfg.Toggl.UserID, "Toggl user ID")
+	// Other
 	fs.BoolVar(&cfg.SaveToCsv, "csv", false, "Save to csv")
-	fs.StringVar(&cfg.TogglToken, "token", "", "Toggl token")
-	fs.IntVar(&cfg.TogglWorkspaceID, "workspace", 0, "Toggl workspace ID")
-	fs.IntVar(&cfg.TogglUserID, "user", 0, "Toggl user ID")
 }
 
 // parseStartCommand parses flags for the "start" subcommand
-func parseStartCommand(cfg *CLIConfig) {
+func parseStartCommand(cfg *CLIConfig, fileCfg *pomo.FileConfig) {
+	// Parse duration from file config, fallback to 25m
+	defaultDuration := 25 * time.Minute
+	if fileCfg.Pomodoro.DefaultDuration != "" {
+		if d, err := time.ParseDuration(fileCfg.Pomodoro.DefaultDuration); err == nil {
+			defaultDuration = d
+		}
+	}
+
+	// Use file config for message default
+	defaultMessage := "Pomodoro finished! Time for a break."
+	if fileCfg.Pomodoro.DefaultMessage != "" {
+		defaultMessage = fileCfg.Pomodoro.DefaultMessage
+	}
+
 	fs := flag.NewFlagSet("start", flag.ExitOnError)
-	fs.DurationVar(&cfg.Duration, "d", 25*time.Minute, "Timer duration")
-	fs.StringVar(&cfg.Message, "m", "Pomodoro finished! Time for a break.", "Notification message")
-	registerCommonFlags(fs, cfg)
+	fs.DurationVar(&cfg.Timer.Duration, "d", defaultDuration, "Timer duration")
+	fs.StringVar(&cfg.Timer.Message, "m", defaultMessage, "Notification message")
+	registerCommonFlags(fs, cfg, fileCfg)
 	fs.Parse(os.Args[2:])
 
 	if fs.NArg() > 0 {
-		cfg.Title = fs.Arg(0)
+		cfg.Timer.Title = fs.Arg(0)
 	} else {
-		cfg.Title = "focus"
+		cfg.Timer.Title = "focus"
 	}
 }
 
 // parseRestCommand parses flags for the "rest" subcommand
-func parseRestCommand(cfg *CLIConfig) {
+func parseRestCommand(cfg *CLIConfig, fileCfg *pomo.FileConfig) {
+	// Parse duration from file config, fallback to 5m
+	defaultDuration := 5 * time.Minute
+	if fileCfg.Rest.DefaultDuration != "" {
+		if d, err := time.ParseDuration(fileCfg.Rest.DefaultDuration); err == nil {
+			defaultDuration = d
+		}
+	}
+
+	// Use file config for message default
+	defaultMessage := "Break finished! Time for a pomodoro."
+	if fileCfg.Rest.DefaultMessage != "" {
+		defaultMessage = fileCfg.Rest.DefaultMessage
+	}
+
 	fs := flag.NewFlagSet("rest", flag.ExitOnError)
-	fs.DurationVar(&cfg.Duration, "d", 5*time.Minute, "Timer duration")
-	fs.StringVar(&cfg.Message, "m", "Break finished! Time for a pomodoro.", "Notification message")
-	registerCommonFlags(fs, cfg)
+	fs.DurationVar(&cfg.Timer.Duration, "d", defaultDuration, "Timer duration")
+	fs.StringVar(&cfg.Timer.Message, "m", defaultMessage, "Notification message")
+	registerCommonFlags(fs, cfg, fileCfg)
 	fs.Parse(os.Args[2:])
 
 	if fs.NArg() > 0 {
-		cfg.Title = fs.Arg(0)
+		cfg.Timer.Title = fs.Arg(0)
 	} else {
-		cfg.Title = "break"
+		cfg.Timer.Title = "break"
 	}
 }
 
