@@ -1,34 +1,30 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"pomo.local/internal/pomo"
 	"pomo.local/internal/utils"
-
-	"time"
 )
 
 // it is filled by -ldflags="-X main.version=$(VERSION)"" in makefile
 var version string = "dev"
 
-// Config holds all CLI configuration options
-type Config struct {
-	Duration         time.Duration
-	Title            string
-	Message          string
-	SaveToCsv        bool
-	NoNotify         bool
-	MuteNotifySound  bool
-	SaveInToggl      bool
-	TogglToken       string
-	TogglWorkspaceID int
-	TogglUserID      int
-	NotifySound      string
-	ShowVersion      bool
+var configDir string // XDG_CONFIG_HOME
+var dataDir string   // XDG_DATA_HOME
+
+func init() {
+	var err error
+	if configDir, err = utils.GetConfigDir(); err != nil {
+		fatal("Error getting config directory: %v", err)
+	}
+	if dataDir, err = utils.GetDataDir(); err != nil {
+		fatal("Error getting data directory: %v", err)
+	}
 }
 
 func fatal(format string, args ...any) {
@@ -36,20 +32,8 @@ func fatal(format string, args ...any) {
 	os.Exit(1)
 }
 
-// registerCommonFlags registers flags shared between start and rest commands
-func registerCommonFlags(fs *flag.FlagSet, cfg *Config) {
-	fs.BoolVar(&cfg.NoNotify, "no-notify", false, "Don't notify")
-	fs.BoolVar(&cfg.MuteNotifySound, "mute", false, "Mute notify sound")
-	fs.StringVar(&cfg.NotifySound, "notify-sound", "", "Notify sound")
-	fs.BoolVar(&cfg.SaveInToggl, "toggl", false, "Save in Toggl")
-	fs.BoolVar(&cfg.SaveToCsv, "csv", false, "Save to csv")
-	fs.StringVar(&cfg.TogglToken, "token", "", "Toggl token")
-	fs.IntVar(&cfg.TogglWorkspaceID, "workspace", 0, "Toggl workspace ID")
-	fs.IntVar(&cfg.TogglUserID, "user", 0, "Toggl user ID")
-}
-
 // run executes the pomodoro timer with the given configuration
-func run(cfg *Config) {
+func run(cfg *CLIConfig) {
 	if cfg.Duration < 5*time.Minute {
 		fatal("please, focus more than 5 minutes")
 	}
@@ -106,69 +90,28 @@ func run(cfg *Config) {
 	}
 }
 
-func printUsage() {
-	fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options] \"your current focus\" ")
-	fmt.Fprintln(os.Stderr, "Commands:")
-	fmt.Fprintln(os.Stderr, "  start - Set a new pomodoro timer")
-	fmt.Fprintln(os.Stderr, "  rest - Set a rest timer")
-	fmt.Fprintln(os.Stderr, "Options:")
-	fmt.Fprintln(os.Stderr, "  -d duration - Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".")
-	fmt.Fprintln(os.Stderr, "  -m message - Notification message (default: Pomodoro finished! Time for a break for start, Break finished! Time for a pomodoro for rest)")
-	fmt.Fprintln(os.Stderr, "  -t title - Notification title (default: Pomodoro Timer for start, Break Timer for rest)")
-	fmt.Fprintln(os.Stderr, "  --toggl - Save in Toggl")
-	fmt.Fprintln(os.Stderr, "  --csv - Save to csv")
-	fmt.Fprintln(os.Stderr, "  --no-notify - Don't notify")
-	fmt.Fprintln(os.Stderr, "  --mute - Mute notify sound")
-	fmt.Fprintln(os.Stderr, "  --notify-sound <path/to/sound> - Notify sound")
-	fmt.Fprintln(os.Stderr, "  --token <token> - Toggl token")
-	fmt.Fprintln(os.Stderr, "  --workspace <workspaceId> - Toggl workspace ID")
-	fmt.Fprintln(os.Stderr, "  --user <userId> - Toggl user ID")
-	fmt.Fprintln(os.Stderr, "  --version - shows current version")
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		printUsage()
 		os.Exit(1)
 	}
 
-	cfg := &Config{}
+	cfg := &CLIConfig{}
+
+	log.Println("DataDir:", dataDir)
+	log.Println("ConfigDir:", configDir)
 
 	switch os.Args[1] {
 	case "start":
-		fs := flag.NewFlagSet("start", flag.ExitOnError)
-		fs.DurationVar(&cfg.Duration, "d", 25*time.Minute, "Timer duration")
-		fs.StringVar(&cfg.Message, "m", "Pomodoro finished! Time for a break.", "Notification message")
-		registerCommonFlags(fs, cfg)
-		fs.Parse(os.Args[2:])
-
-		if fs.NArg() > 0 {
-			cfg.Title = fs.Arg(0)
-		} else {
-			cfg.Title = "focus"
-		}
-
+		parseStartCommand(cfg)
 	case "rest":
-		fs := flag.NewFlagSet("rest", flag.ExitOnError)
-		fs.DurationVar(&cfg.Duration, "d", 5*time.Minute, "Timer duration")
-		fs.StringVar(&cfg.Message, "m", "Break finished! Time for a pomodoro.", "Notification message")
-		registerCommonFlags(fs, cfg)
-		fs.Parse(os.Args[2:])
-
-		if fs.NArg() > 0 {
-			cfg.Title = fs.Arg(0)
-		} else {
-			cfg.Title = "break"
-		}
-
+		parseRestCommand(cfg)
 	default:
-		flag.BoolVar(&cfg.ShowVersion, "version", false, "Show current version")
-		flag.Usage = printUsage
-		flag.Parse()
-		if cfg.ShowVersion {
+		if parseVersionFlag() {
 			fmt.Fprintln(os.Stderr, version)
 			os.Exit(0)
 		}
+		printUsage()
 		os.Exit(1)
 	}
 
