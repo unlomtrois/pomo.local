@@ -50,8 +50,8 @@ func registerCommonFlags(fs *flag.FlagSet, cfg *Config) {
 
 // run executes the pomodoro timer with the given configuration
 func run(cfg *Config) {
-	if cfg.Duration <= 0 {
-		fatal("Error: duration must be positive")
+	if cfg.Duration < 5*time.Minute {
+		fatal("please, focus more than 5 minutes")
 	}
 
 	pomodoro := pomo.NewPomodoro(cfg.Title, cfg.Message, cfg.Duration)

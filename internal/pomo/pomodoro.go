@@ -60,8 +60,13 @@ func (p *Pomodoro) Notify(muteNotifySound bool, notifySoundFile string) error {
 		Hint = fmt.Sprintf("string:sound-file:%s", notifySoundFile)
 	}
 
+	secondsToSleep := p.StopTime.Second()
+	sleepCmd := fmt.Sprintf("sleep %d", secondsToSleep)
+
 	notifyCmd := fmt.Sprintf("DISPLAY=:0 notify-send -u critical '%s' '%s' --hint=\"%s\"", p.Title, p.Message, Hint)
-	atTime := fmt.Sprintf("now + %d minutes", int(p.Duration.Minutes())) // todo: perhaps this blocks me from setting for 10 seconds, and runs automatically
+	sleepAndNotifyCmd := fmt.Sprintf("%s && %s", sleepCmd, notifyCmd)
+
+	atTime := fmt.Sprintf("now + %d minutes", int(p.Duration.Minutes()))
 	atCmd := exec.Command("at", atTime)
 
 	// Pipe the notify-send command to at via stdin
@@ -74,7 +79,7 @@ func (p *Pomodoro) Notify(muteNotifySound bool, notifySoundFile string) error {
 		return fmt.Errorf("Error starting at command: %v\n", err)
 	}
 
-	_, err = stdin.Write([]byte(notifyCmd + "\n"))
+	_, err = stdin.Write([]byte(sleepAndNotifyCmd + "\n"))
 	if err != nil {
 		return fmt.Errorf("Error writing to stdin: %v\n", err)
 	}
