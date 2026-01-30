@@ -48,3 +48,4 @@
 - consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
 - I don't like that adding options after positional string does no work. e.g. `pomo start "somethind" -d 15m` -> -d 15 does not work and duration is defaulted to 25minutes
+- add `-v` or `--verbose` flag to log what is exactly happening
