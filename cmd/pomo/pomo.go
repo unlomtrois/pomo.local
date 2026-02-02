@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -96,16 +95,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Println("DataDir:", dataDir)
-	log.Println("ConfigDir:", configDir)
+	cfg := &CLIConfig{}
+
+	for _, arg := range os.Args {
+		if arg == "--verbose" {
+			cfg.Verbose = true
+		}
+	}
 
 	// Load file config (creates default if not exists)
-	fileCfg, err := pomo.LoadConfig(configDir)
+	fileCfg, err := pomo.LoadConfig(configDir, cfg.Verbose)
 	if err != nil {
 		fatal("Error loading config: %v", err)
 	}
-
-	cfg := &CLIConfig{}
 
 	switch os.Args[1] {
 	case "start":

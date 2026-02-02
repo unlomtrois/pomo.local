@@ -29,6 +29,7 @@ type CLIConfig struct {
 	}
 	SaveToCsv   bool
 	ShowVersion bool
+	Verbose     bool
 }
 
 // registerCommonFlags registers flags shared between start and rest commands
@@ -44,6 +45,7 @@ func registerCommonFlags(fs *flag.FlagSet, cfg *CLIConfig, fileCfg *pomo.FileCon
 	fs.IntVar(&cfg.Toggl.UserID, "user", fileCfg.Toggl.UserID, "Toggl user ID")
 	// Other
 	fs.BoolVar(&cfg.SaveToCsv, "csv", false, "Save to csv")
+	fs.BoolVar(&cfg.Verbose, "verbose", false, "--verbose")
 }
 
 // parseStartCommand parses flags for the "start" subcommand
