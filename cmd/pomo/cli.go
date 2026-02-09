@@ -64,17 +64,14 @@ func parseStartCommand(cfg *CLIConfig, fileCfg *pomo.FileConfig) {
 		defaultMessage = fileCfg.Pomodoro.DefaultMessage
 	}
 
-	fs := flag.NewFlagSet("start", flag.ExitOnError)
-	fs.DurationVar(&cfg.Timer.Duration, "d", defaultDuration, "Timer duration")
-	fs.StringVar(&cfg.Timer.Message, "m", defaultMessage, "Notification message")
-	registerCommonFlags(fs, cfg, fileCfg)
-	fs.Parse(os.Args[2:])
+	defaultTitle := "focus"
 
-	if fs.NArg() > 0 {
-		cfg.Timer.Title = fs.Arg(0)
-	} else {
-		cfg.Timer.Title = "focus"
-	}
+	startCmd := flag.NewFlagSet("start", flag.ExitOnError)
+	startCmd.DurationVar(&cfg.Timer.Duration, "d", defaultDuration, "Timer duration")
+	startCmd.StringVar(&cfg.Timer.Title, "t", defaultTitle, "Title")
+	startCmd.StringVar(&cfg.Timer.Message, "m", defaultMessage, "Notification message")
+	registerCommonFlags(startCmd, cfg, fileCfg)
+	startCmd.Parse(os.Args[2:])
 }
 
 // parseRestCommand parses flags for the "rest" subcommand
@@ -92,18 +89,14 @@ func parseRestCommand(cfg *CLIConfig, fileCfg *pomo.FileConfig) {
 	if fileCfg.Rest.DefaultMessage != "" {
 		defaultMessage = fileCfg.Rest.DefaultMessage
 	}
+	defaultTitle := "break"
 
-	fs := flag.NewFlagSet("rest", flag.ExitOnError)
-	fs.DurationVar(&cfg.Timer.Duration, "d", defaultDuration, "Timer duration")
-	fs.StringVar(&cfg.Timer.Message, "m", defaultMessage, "Notification message")
-	registerCommonFlags(fs, cfg, fileCfg)
-	fs.Parse(os.Args[2:])
-
-	if fs.NArg() > 0 {
-		cfg.Timer.Title = fs.Arg(0)
-	} else {
-		cfg.Timer.Title = "break"
-	}
+	restCmd := flag.NewFlagSet("rest", flag.ExitOnError)
+	restCmd.DurationVar(&cfg.Timer.Duration, "d", defaultDuration, "Timer duration")
+	restCmd.StringVar(&cfg.Timer.Title, "t", defaultTitle, "Title")
+	restCmd.StringVar(&cfg.Timer.Message, "m", defaultMessage, "Notification message")
+	registerCommonFlags(restCmd, cfg, fileCfg)
+	restCmd.Parse(os.Args[2:])
 }
 
 // parseVersionFlag parses the --version flag and returns true if version was requested
@@ -116,7 +109,7 @@ func parseVersionFlag() bool {
 }
 
 func printUsage() {
-	fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options] \"your current focus\" ")
+	fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options]")
 	fmt.Fprintln(os.Stderr, "Commands:")
 	fmt.Fprintln(os.Stderr, "  start - Set a new pomodoro timer")
 	fmt.Fprintln(os.Stderr, "  rest - Set a rest timer")
