@@ -99,6 +99,14 @@ func parseRestCommand(cfg *CLIConfig, fileCfg *pomo.FileConfig) {
 	restCmd.Parse(os.Args[2:])
 }
 
+// parseNotifyCommand parses flags for the "notify" subcommand
+func parseNotifyCommand(cfg *CLIConfig) {
+	notifyCmd := flag.NewFlagSet("notify", flag.ExitOnError)
+	notifyCmd.StringVar(&cfg.Timer.Title, "t", "", "Title")
+	notifyCmd.StringVar(&cfg.Timer.Message, "m", "", "Notification message")
+	notifyCmd.Parse(os.Args[2:])
+}
+
 // parseVersionFlag parses the --version flag and returns true if version was requested
 func parseVersionFlag() bool {
 	var showVersion bool
@@ -113,6 +121,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "Commands:")
 	fmt.Fprintln(os.Stderr, "  start - Set a new pomodoro timer")
 	fmt.Fprintln(os.Stderr, "  rest - Set a rest timer")
+	fmt.Fprintln(os.Stderr, "  notify - Immediate notify")
 	fmt.Fprintln(os.Stderr, "Options:")
 	fmt.Fprintln(os.Stderr, "  -d duration - Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".")
 	fmt.Fprintln(os.Stderr, "  -m message - Notification message (default: Pomodoro finished! Time for a break for start, Break finished! Time for a pomodoro for rest)")

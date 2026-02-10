@@ -108,6 +108,13 @@ func main() {
 		parseStartCommand(cfg, fileCfg)
 	case "rest":
 		parseRestCommand(cfg, fileCfg)
+	case "notify":
+		parseNotifyCommand(cfg)
+		pomodoro := pomo.NewPomodoro(cfg.Timer.Title, cfg.Timer.Message, 0)
+		if err := pomodoro.QuickNotify(); err != nil {
+			fatal("Error notifying: %v", err)
+		}
+		os.Exit(0)
 	default:
 		if parseVersionFlag() {
 			fmt.Fprintln(os.Stderr, version)

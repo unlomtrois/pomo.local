@@ -95,6 +95,20 @@ func (p *Pomodoro) Notify(muteNotifySound bool, notifySoundFile string) error {
 	return nil
 }
 
+func (p *Pomodoro) QuickNotify() error {
+	notifyCmd := exec.Command("notify-send", p.Title, p.Message, "--hint=string:sound-name:complete")
+
+	if err := notifyCmd.Start(); err != nil {
+		return fmt.Errorf("Error starting at command: %v\n", err)
+	}
+
+	if err := notifyCmd.Wait(); err != nil {
+		return fmt.Errorf("Error: %v\nMake sure 'at' daemon (atd) is running.\n", err)
+	}
+
+	return nil
+}
+
 func (p *Pomodoro) Save(filename string) error {
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
