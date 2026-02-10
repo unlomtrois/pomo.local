@@ -97,14 +97,8 @@ func main() {
 
 	cfg := &CLIConfig{}
 
-	for _, arg := range os.Args {
-		if arg == "--verbose" {
-			cfg.Verbose = true
-		}
-	}
-
 	// Load file config (creates default if not exists)
-	fileCfg, err := pomo.LoadConfig(configDir, cfg.Verbose)
+	fileCfg, err := pomo.LoadConfig(configDir)
 	if err != nil {
 		fatal("Error loading config: %v", err)
 	}
