@@ -51,3 +51,4 @@
 - add `-v` or `--verbose` flag to log what is exactly happening
 - deslopify main cli
 - write pomo logs in `~/.local/share/pomo`
+- what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
