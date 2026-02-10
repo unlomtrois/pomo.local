@@ -32,34 +32,34 @@ func fatal(format string, args ...any) {
 }
 
 // run executes the pomodoro timer with the given configuration
-func run(cfg *CLIConfig) {
+func run(cfg *CLIConfig) error {
 	if cfg.Timer.Duration < 5*time.Minute {
-		fatal("please, focus more than 5 minutes")
+		return fmt.Errorf("please, focus more than 5 minutes")
 	}
 
 	pomodoro := pomo.NewPomodoro(cfg.Timer.Title, cfg.Timer.Message, cfg.Timer.Duration)
 
 	if cfg.SaveToCsv {
 		if err := pomo.InitCsv("pomodoro.csv"); err != nil {
-			fatal("Error initializing pomodoro.csv: %v", err)
+			return fmt.Errorf("Error initializing pomodoro.csv: %v", err)
 		}
 		if err := pomodoro.Save("pomodoro.csv"); err != nil {
-			fatal("Error saving pomodoro: %v", err)
+			return fmt.Errorf("Error saving pomodoro: %v", err)
 		}
 	}
 
 	if cfg.Toggl.Enabled {
 		if cfg.Toggl.Token == "" {
-			fatal("Error: toggl token is required")
+			return fmt.Errorf("Error: toggl token is required")
 		}
 		if cfg.Toggl.WorkspaceID == 0 {
-			fatal("Error: toggl workspace id is required")
+			return fmt.Errorf("Error: toggl workspace id is required")
 		}
 		if cfg.Toggl.UserID == 0 {
-			fatal("Error: toggl user id is required")
+			return fmt.Errorf("Error: toggl user id is required")
 		}
 		if err := pomodoro.SaveInToggl(cfg.Toggl.Token, cfg.Toggl.WorkspaceID, cfg.Toggl.UserID); err != nil {
-			fatal("Error saving in Toggl: %v", err)
+			return fmt.Errorf("Error saving in Toggl: %v", err)
 		}
 		fmt.Println("Pomodoro saved in Toggl")
 	}
@@ -80,13 +80,14 @@ func run(cfg *CLIConfig) {
 		fmt.Println("Using custom notify sound:", cfg.Notifications.Sound)
 		cfg.Notifications.Sound = filepath.Clean(cfg.Notifications.Sound)
 		if _, err := os.Stat(cfg.Notifications.Sound); err != nil {
-			fatal("Error: notify sound file does not exist: %v", err)
+			return fmt.Errorf("Error: notify sound file does not exist: %v", err)
 		}
 	}
 
 	if err := pomodoro.Notify(cfg.Notifications.Mute, cfg.Notifications.Sound); err != nil {
-		fatal("Error notifying: %v", err)
+		return fmt.Errorf("Error notifying: %v", err)
 	}
+	return nil
 }
 
 func main() {
@@ -106,8 +107,14 @@ func main() {
 	switch os.Args[1] {
 	case "start":
 		parseStartCommand(cfg, fileCfg)
+		if err := run(cfg); err != nil {
+			fatal("Error running pomodoro: %v", err)
+		}
 	case "rest":
 		parseRestCommand(cfg, fileCfg)
+		if err := run(cfg); err != nil {
+			fatal("Error running pomodoro: %v", err)
+		}
 	case "notify":
 		parseNotifyCommand(cfg)
 		pomodoro := pomo.NewPomodoro(cfg.Timer.Title, cfg.Timer.Message, 0)
@@ -123,6 +130,4 @@ func main() {
 		printUsage()
 		os.Exit(1)
 	}
-
-	run(cfg)
 }
