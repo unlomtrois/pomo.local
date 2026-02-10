@@ -36,6 +36,9 @@
 # feat
 - [x] save configs into ~/.local
 
+# feat
+- [x] if we use unknown command, cli tell about it
+
 ---
 
 # backlog

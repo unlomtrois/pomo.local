@@ -127,6 +127,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, version)
 			os.Exit(0)
 		}
+		fmt.Fprintln(os.Stderr, "unknown command!")
 		printUsage()
 		os.Exit(1)
 	}
