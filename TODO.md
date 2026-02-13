@@ -58,7 +58,7 @@
 - add `current` command to get the active entry
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
-- add `-v` or `--verbose` flag to log what is exactly happening
+- add `-v` or `--verbose` flag to log what is exactly happening, e.g. for these systemd-run timer stuff
 - deslopify main cli
 - write pomo logs in `~/.local/share/pomo`
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
