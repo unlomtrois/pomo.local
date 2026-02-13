@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"pomo.local/internal/pomo"
 	"pomo.local/internal/utils"
@@ -33,10 +32,6 @@ func fatal(format string, args ...any) {
 
 // run executes the pomodoro timer with the given configuration
 func run(cfg *CLIConfig) error {
-	if cfg.Timer.Duration < 5*time.Minute {
-		return fmt.Errorf("please, focus more than 5 minutes")
-	}
-
 	pomodoro := pomo.NewPomodoro(cfg.Timer.Title, cfg.Timer.Message, cfg.Timer.Duration)
 
 	if cfg.SaveToCsv {

@@ -44,6 +44,11 @@
 - [x] add `notify` command
 - [x] replace `notify-send` with `pomo notify` 
 
+# feat
+- ~~consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)~~
+- use `systemd-run` instead of `at` which support one-time `systemd/Timers`
+- [x] replace `at` with systemd-run
+
 ---
 
 # backlog
@@ -52,11 +57,11 @@
 - add `export` command
 - add `current` command to get the active entry
 - add `--markdown <pomodoro.md>` flag to export to markdown
-- ~~consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)~~
-- use `systemd-run` instead of `at` which support one-time `systemd/Timers`
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
 - add `-v` or `--verbose` flag to log what is exactly happening
 - deslopify main cli
 - write pomo logs in `~/.local/share/pomo`
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
 - make pomo "rest" command just an alias to more robust command (essentially 'start')
+- `--strict` flag that allows only a single pomodoro session to be tracked
+- add `list` command to make systemctl calls to see all pending pomodoro timers

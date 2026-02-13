@@ -1,6 +1,6 @@
 # Simple pomodoro cli
 
-basically a wrapper around libnotify (`notify-send`) and `at` utilities.
+basically a wrapper around libnotify's `notify-send` and `systemd-run`.
 
 ## build
 
@@ -17,11 +17,11 @@ pomo start
 ## save to csv
 
 ```sh
-pomo start --csv "focus" 
+pomo start -t "focus" --csv 
 ```
 
 ## save to toggl
 
 ```sh
-pomo start --toggl --token <t> --workspace <w> --user <u> "focus" 
+pomo start -t "focus" --toggl --token <t> --workspace <w> --user <u>
 ```
