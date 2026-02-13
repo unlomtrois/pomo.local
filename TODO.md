@@ -39,6 +39,11 @@
 # feat
 - [x] if we use unknown command, cli tell about it
 
+# feat
+- pomo `notify` command and executable schedules itself `pomo notify ... | at ...` instead of calling notify-send
+- [x] add `notify` command
+- [x] replace `notify-send` with `pomo notify` 
+
 ---
 
 # backlog
@@ -47,11 +52,11 @@
 - add `export` command
 - add `current` command to get the active entry
 - add `--markdown <pomodoro.md>` flag to export to markdown
-- pomo `notify` command that talks with libnotify libnotify directly, and executable schedules itself `pomo notify ... | at ...`
-- consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)
+- ~~consider using [systemd/Timers](https://wiki.archlinux.org/title/Systemd/Timers) for sub-minute precision instead of `at` (which supports only minute-precision jobs)~~
+- use `systemd-run` instead of `at` which support one-time `systemd/Timers`
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
-- I don't like that adding options after positional string does no work. e.g. `pomo start "somethind" -d 15m` -> -d 15 does not work and duration is defaulted to 25minutes
 - add `-v` or `--verbose` flag to log what is exactly happening
 - deslopify main cli
 - write pomo logs in `~/.local/share/pomo`
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
+- make pomo "rest" command just an alias to more robust command (essentially 'start')

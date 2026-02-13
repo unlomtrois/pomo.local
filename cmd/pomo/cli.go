@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"pomo.local/internal/pomo"
+	"pomo.local/internal/utils"
 )
 
 // CLIConfig holds all CLI configuration options
-type CLIConfig struct {
+type CLIConfig struct { // TODO: I notice it becoming hard to manage args in internal/pomo, because I cannot simply import cmd/pomo/cli this thing from there. Do something about it later
 	Timer struct {
 		Duration time.Duration
 		Title    string
@@ -26,6 +27,7 @@ type CLIConfig struct {
 		Disabled bool
 		Mute     bool
 		Sound    string
+		Hint     string
 	}
 	SaveToCsv   bool
 	ShowVersion bool
@@ -104,6 +106,7 @@ func parseNotifyCommand(cfg *CLIConfig) {
 	notifyCmd := flag.NewFlagSet("notify", flag.ExitOnError)
 	notifyCmd.StringVar(&cfg.Timer.Title, "t", "", "Title")
 	notifyCmd.StringVar(&cfg.Timer.Message, "m", "", "Notification message")
+	notifyCmd.StringVar(&cfg.Notifications.Hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
 	notifyCmd.Parse(os.Args[2:])
 }
 

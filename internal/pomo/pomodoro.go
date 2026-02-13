@@ -12,6 +12,11 @@ import (
 	"pomo.local/internal/toggl"
 )
 
+var (
+	HintMute    = "boolean:suppress-sound:true"
+	HintDefault = "string:sound-name:complete"
+)
+
 func formatDuration(d time.Duration) string {
 	h := int(d.Hours())
 	m := int(d.Minutes()) % 60
@@ -48,64 +53,32 @@ func (p *Pomodoro) Strings() []string {
 	return []string{p.Title, startTime, stopTime, duration}
 }
 
-var DefaultHint = "string:sound-name:complete" // XDG Sound Theme spec
-
-func (p *Pomodoro) Notify(muteNotifySound bool, notifySoundFile string) error {
-	var Hint = DefaultHint
-	if muteNotifySound {
-		Hint = "boolean:suppress-sound:true"
-	}
-
-	if notifySoundFile != "" {
-		Hint = fmt.Sprintf("string:sound-file:%s", notifySoundFile)
-	}
-
-	secondsToSleep := p.StopTime.Second()
-	sleepCmd := fmt.Sprintf("sleep %d", secondsToSleep)
-
-	notifyCmd := fmt.Sprintf("DISPLAY=:0 notify-send -u critical '%s' '%s' --hint=\"%s\"", p.Title, p.Message, Hint)
-	sleepAndNotifyCmd := fmt.Sprintf("%s && %s", sleepCmd, notifyCmd)
-
+func (p *Pomodoro) NotifyLater(hint string) error {
 	atTime := fmt.Sprintf("now + %d minutes", int(p.Duration.Minutes()))
-	atCmd := exec.Command("at", atTime)
+	cmd := exec.Command("at", atTime)
 
 	// Pipe the notify-send command to at via stdin
-	stdin, err := atCmd.StdinPipe()
+	notifyCmd := fmt.Sprintf("pomo notify -t %q -m %q --hint=%q", p.Title, p.Message, hint)
+	sleepAndNotify := fmt.Sprintf("sleep %d && %s", p.StopTime.Second(), notifyCmd)
+	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return fmt.Errorf("Error creating stdin pipe: %v\n", err)
 	}
-
-	if err := atCmd.Start(); err != nil {
+	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("Error starting at command: %v\n", err)
 	}
-
-	_, err = stdin.Write([]byte(sleepAndNotifyCmd + "\n"))
+	_, err = stdin.Write([]byte(sleepAndNotify + "\n"))
 	if err != nil {
 		return fmt.Errorf("Error writing to stdin: %v\n", err)
 	}
 	if err := stdin.Close(); err != nil {
 		return fmt.Errorf("Error closing stdin: %v\n", err)
 	}
-
-	if err := atCmd.Wait(); err != nil {
+	if err := cmd.Wait(); err != nil {
 		return fmt.Errorf("Error: %v\nMake sure 'at' daemon (atd) is running.\n", err)
 	}
 
 	fmt.Printf("   You'll be notified at %s\n", p.StopTime.Format("15:04:05"))
-	return nil
-}
-
-func (p *Pomodoro) QuickNotify() error {
-	notifyCmd := exec.Command("notify-send", p.Title, p.Message, "--hint=string:sound-name:complete")
-
-	if err := notifyCmd.Start(); err != nil {
-		return fmt.Errorf("Error starting at command: %v\n", err)
-	}
-
-	if err := notifyCmd.Wait(); err != nil {
-		return fmt.Errorf("Error: %v\nMake sure 'at' daemon (atd) is running.\n", err)
-	}
-
 	return nil
 }
 

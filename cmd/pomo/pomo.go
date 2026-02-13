@@ -84,7 +84,8 @@ func run(cfg *CLIConfig) error {
 		}
 	}
 
-	if err := pomodoro.Notify(cfg.Notifications.Mute, cfg.Notifications.Sound); err != nil {
+	hint := utils.BuildHint(cfg.Notifications.Mute, cfg.Notifications.Sound)
+	if err := pomodoro.NotifyLater(hint); err != nil {
 		return fmt.Errorf("Error notifying: %v", err)
 	}
 	return nil
@@ -118,7 +119,7 @@ func main() {
 	case "notify":
 		parseNotifyCommand(cfg)
 		pomodoro := pomo.NewPomodoro(cfg.Timer.Title, cfg.Timer.Message, 0)
-		if err := pomodoro.QuickNotify(); err != nil {
+		if err := utils.Notify(pomodoro.Title, pomodoro.Message, cfg.Notifications.Hint); err != nil {
 			fatal("Error notifying: %v", err)
 		}
 		os.Exit(0)
