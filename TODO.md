@@ -65,3 +65,6 @@
 - make pomo "rest" command just an alias to more robust command (essentially 'start')
 - `--strict` flag that allows only a single pomodoro session to be tracked
 - add `list` command to make systemctl calls to see all pending pomodoro timers
+- refactor
+- - move notify logic into notify package
+- - move save logic into sep package as well
