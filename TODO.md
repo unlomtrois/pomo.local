@@ -63,6 +63,14 @@
 
 ---
 
+# plan
+
+- add `pomo auth` command that can take --mail / --toggl flags
+- uses https://pkg.go.dev/golang.org/x/term#Terminal.ReadPassword to read password
+- uses keyring/dbus
+
+---
+
 # backlog
 - add mdns server, maybe daemon
 - add obsidian markdown integration (provide obsidian links where to export?)

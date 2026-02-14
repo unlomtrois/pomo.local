@@ -44,9 +44,15 @@ func main() {
 		if err := cli.ParseRest(os.Args[2:]).Run(); err != nil {
 			fatal("Error running \"pomo start\": %w", err)
 		}
+		os.Exit(0)
 	case "notify":
 		if err := cli.ParseNotify(os.Args[2:]).Run(); err != nil {
 			fatal("Error running pomo notify: %w", err)
+		}
+		os.Exit(0)
+	case "auth":
+		if err := cli.ParseAuth(os.Args[2:]).Run(); err != nil {
+			fatal("Failed to auth: %w", err)
 		}
 		os.Exit(0)
 	default:
