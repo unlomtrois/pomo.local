@@ -1,4 +1,4 @@
-package pomo
+package config
 
 import (
 	"encoding/json"
