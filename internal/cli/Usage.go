@@ -11,7 +11,7 @@ func PrintUsage() {
 	fmt.Fprintln(os.Stderr, "  start - Set a new pomodoro timer")
 	fmt.Fprintln(os.Stderr, "  notify - Immediate notify")
 	fmt.Fprintln(os.Stderr, "Options:")
-	fmt.Fprintln(os.Stderr, "  -d duration - Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".")
+	fmt.Fprintln(os.Stderr, "  -d duration - Valid time units are \"s\", \"m\", \"h\".")
 	fmt.Fprintln(os.Stderr, "  -m message - Notification message (default: Pomodoro finished! Time for a break for start, Break finished! Time for a pomodoro for rest)")
 	fmt.Fprintln(os.Stderr, "  -t title - Notification title (default: Pomodoro Timer for start, Break Timer for rest)")
 	fmt.Fprintln(os.Stderr, "  --toggl - Save in Toggl")
