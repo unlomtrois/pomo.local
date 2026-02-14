@@ -9,16 +9,16 @@ import (
 
 // NotifyCommand is basically a wrapper around notify-send
 type NotifyCommand struct {
-	title   string
-	message string
+	summary string
+	body    string
 	hint    string
 }
 
 func ParseNotify(args []string) *NotifyCommand {
 	cmd := NotifyCommand{}
 	fs := flag.NewFlagSet("notify", flag.ExitOnError)
-	fs.StringVar(&cmd.title, "t", "Pomodoro session is ended", "Title")
-	fs.StringVar(&cmd.message, "m", "", "Notification message")
+	fs.StringVar(&cmd.summary, "summary", "Pomodoro session is ended", "Title")
+	fs.StringVar(&cmd.body, "body", "", "Notification message")
 	fs.StringVar(&cmd.hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
 	fs.Parse(args)
 	return &cmd
@@ -26,5 +26,5 @@ func ParseNotify(args []string) *NotifyCommand {
 
 func (cmd *NotifyCommand) Run() error {
 	notifier := &notifier.LibnotifyNotifier{}
-	return notifier.Notify(cmd.title, cmd.message, cmd.hint)
+	return notifier.Notify(cmd.summary, cmd.body, cmd.hint)
 }

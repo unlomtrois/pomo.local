@@ -52,8 +52,8 @@ func (cmd *StartCommand) Run() error {
 		Binary:    bin,
 		Args: []string{
 			"notify",
-			"-t", "Pomodoro",
-			"-m", cmd.message,
+			"--summary", "Pomodoro",
+			"--body", cmd.message,
 			"--hint", cmd.hint,
 		},
 	}

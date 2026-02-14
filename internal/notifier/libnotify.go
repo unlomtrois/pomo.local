@@ -7,8 +7,8 @@ import (
 
 type LibnotifyNotifier struct{}
 
-func (n *LibnotifyNotifier) Notify(title, message string, hint string) error {
-	notify := exec.Command("notify-send", title, message, "--hint", hint)
+func (n *LibnotifyNotifier) Notify(summary, body, hint string) error {
+	notify := exec.Command("notify-send", summary, body, "--hint", hint)
 
 	if notify.Err != nil {
 		return fmt.Errorf("Error finding notify-send: %v\n", notify.Err)
