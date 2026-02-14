@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"pomo.local/internal/pomo"
@@ -51,7 +52,7 @@ func (cmd *StartCommand) Run() error {
 	}
 
 	task := scheduler.Task{
-		ID:        "0",
+		ID:        strconv.FormatInt(time.Now().Unix(), 16),
 		ExecuteAt: pomodoro.StopTime,
 		Binary:    pomoPath,
 		Args:      []string{"notify", "-t=" + pomodoro.Title, "-m=" + pomodoro.Message, "--hint=" + cmd.hint},
