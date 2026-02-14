@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"pomo.local/internal/cli"
 	"pomo.local/internal/pomo"
 	"pomo.local/internal/utils"
 )
@@ -112,10 +113,8 @@ func main() {
 			fatal("Error running pomodoro: %v", err)
 		}
 	case "notify":
-		parseNotifyCommand(cfg)
-		pomodoro := pomo.NewPomodoro(cfg.Timer.Title, cfg.Timer.Message, 0)
-		if err := utils.Notify(pomodoro.Title, pomodoro.Message, cfg.Notifications.Hint); err != nil {
-			fatal("Error notifying: %v", err)
+		if err := cli.ParseNotify(os.Args[2:]).Run(); err != nil {
+			fatal("Error running pomo notify: %w", err)
 		}
 		os.Exit(0)
 	default:

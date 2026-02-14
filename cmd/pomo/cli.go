@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"pomo.local/internal/pomo"
-	"pomo.local/internal/utils"
 )
 
 // CLIConfig holds all CLI configuration options
@@ -99,15 +98,6 @@ func parseRestCommand(cfg *CLIConfig, fileCfg *pomo.FileConfig) {
 	restCmd.StringVar(&cfg.Timer.Message, "m", defaultMessage, "Notification message")
 	registerCommonFlags(restCmd, cfg, fileCfg)
 	restCmd.Parse(os.Args[2:])
-}
-
-// parseNotifyCommand parses flags for the "notify" subcommand
-func parseNotifyCommand(cfg *CLIConfig) {
-	notifyCmd := flag.NewFlagSet("notify", flag.ExitOnError)
-	notifyCmd.StringVar(&cfg.Timer.Title, "t", "", "Title")
-	notifyCmd.StringVar(&cfg.Timer.Message, "m", "", "Notification message")
-	notifyCmd.StringVar(&cfg.Notifications.Hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
-	notifyCmd.Parse(os.Args[2:])
 }
 
 // parseVersionFlag parses the --version flag and returns true if version was requested
