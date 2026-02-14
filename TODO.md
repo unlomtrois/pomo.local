@@ -61,13 +61,14 @@
 # refactor
 - separate "summary" and "title". Title of pomo is something you're doing, and summary should just be "pomodoro session ended"
 
+# feat
+- [x] add `pomo auth` command that can take --mail / --toggl flags
+- [x] uses https://pkg.go.dev/golang.org/x/term#Terminal.ReadPassword to read password
+- [x] uses keyring/dbus, first dependency :(
+
 ---
 
 # plan
-
-- add `pomo auth` command that can take --mail / --toggl flags
-- uses https://pkg.go.dev/golang.org/x/term#Terminal.ReadPassword to read password
-- uses keyring/dbus
 
 ---
 
