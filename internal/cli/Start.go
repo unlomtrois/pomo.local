@@ -3,7 +3,7 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"os/exec"
+	"os"
 	"strconv"
 	"time"
 
@@ -46,7 +46,7 @@ func (cmd *StartCommand) Run() error {
 		return fmt.Errorf("neither 'systemd-run' nor 'at' found. Please install one of them for background notifications")
 	}
 
-	pomoPath, err := exec.LookPath("pomo")
+	bin, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("could not find pomo executable: %v", err)
 	}
@@ -54,8 +54,13 @@ func (cmd *StartCommand) Run() error {
 	task := scheduler.Task{
 		ID:        strconv.FormatInt(time.Now().Unix(), 16),
 		ExecuteAt: pomodoro.StopTime,
-		Binary:    pomoPath,
-		Args:      []string{"notify", "-t=" + pomodoro.Title, "-m=" + pomodoro.Message, "--hint=" + cmd.hint},
+		Binary:    bin,
+		Args: []string{
+			"notify",
+			"-t", pomodoro.Title,
+			"-m", pomodoro.Message,
+			"--hint", cmd.hint,
+		},
 	}
 
 	if err := notifier.Schedule(task); err != nil {
