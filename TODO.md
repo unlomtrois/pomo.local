@@ -75,3 +75,4 @@
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
 - `--strict` flag that allows only a single pomodoro session to be tracked
 - add `list` command to make systemctl calls to see all pending pomodoro timers
+- use [xdg](https://github.com/adrg/xdg) instead of declaring variables in utils
