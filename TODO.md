@@ -71,3 +71,4 @@
 - refactor
 - - move notify logic into notify package
 - - move save logic into sep package as well
+- separate summary and title. Title of pomo is something you're doing, and summary should just be "pomodoro session ended"
