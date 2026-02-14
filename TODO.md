@@ -52,6 +52,15 @@
 # feat
 - add fallback to `at` for systems without systemd
 
+# refactor
+- [x] deslopify main cli
+
+# refactor
+- [x] make pomo "rest" command just an alias to more robust command (essentially 'start')
+
+# refactor
+- separate "summary" and "title". Title of pomo is something you're doing, and summary should just be "pomodoro session ended"
+
 ---
 
 # backlog
@@ -62,13 +71,7 @@
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
 - add `-v` or `--verbose` flag to log what is exactly happening, e.g. for these systemd-run timer stuff
-- deslopify main cli
 - write pomo logs in `~/.local/share/pomo`
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
-- make pomo "rest" command just an alias to more robust command (essentially 'start')
 - `--strict` flag that allows only a single pomodoro session to be tracked
 - add `list` command to make systemctl calls to see all pending pomodoro timers
-- refactor
-- - move notify logic into notify package
-- - move save logic into sep package as well
-- separate summary and title. Title of pomo is something you're doing, and summary should just be "pomodoro session ended"
