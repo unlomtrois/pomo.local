@@ -49,6 +49,9 @@
 - use `systemd-run` instead of `at` which support one-time `systemd/Timers`
 - [x] replace `at` with systemd-run
 
+# feat
+- add fallback to `at` for systems without systemd
+
 ---
 
 # backlog
