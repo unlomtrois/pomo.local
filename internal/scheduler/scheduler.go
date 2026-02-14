@@ -2,8 +2,8 @@ package scheduler
 
 import (
 	"fmt"
-
-	"pomo.local/internal/utils"
+	"os"
+	"os/exec"
 )
 
 type Scheduler interface {
@@ -11,12 +11,22 @@ type Scheduler interface {
 	Cancel(taskID string) error
 }
 
+func hasSystemd() bool {
+	_, err := os.Stat("/run/systemd/system")
+	return err == nil
+}
+
+func hasAt() bool {
+	_, err := exec.LookPath("at")
+	return err == nil
+}
+
 func NewDefault() (Scheduler, error) {
-	if utils.HasSystemd() {
+	if hasSystemd() {
 		return &SystemdScheduler{}, nil
 	}
 
-	if utils.HasAt() {
+	if hasAt() {
 		return &AtScheduler{}, nil
 	}
 
