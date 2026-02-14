@@ -23,5 +23,5 @@ func PrintUsage() {
 	// fmt.Fprintln(os.Stderr, "  --token <token> - Toggl token")
 	// fmt.Fprintln(os.Stderr, "  --workspace <workspaceId> - Toggl workspace ID")
 	// fmt.Fprintln(os.Stderr, "  --user <userId> - Toggl user ID")
-	fmt.Fprintln(os.Stderr, "  --version - shows current version")
+	fmt.Fprintln(os.Stderr, "  -v, --version - shows current version")
 }
