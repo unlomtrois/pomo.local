@@ -9,6 +9,7 @@ func PrintUsage() {
 	fmt.Fprintln(os.Stderr, "Usage: pomo <command> [options]")
 	fmt.Fprintln(os.Stderr, "Commands:")
 	fmt.Fprintln(os.Stderr, "  start - Set a new pomodoro timer")
+	fmt.Fprintln(os.Stderr, "  rest - alias to start with 5 minutes")
 	fmt.Fprintln(os.Stderr, "  notify - Immediate notify")
 	fmt.Fprintln(os.Stderr, "Options:")
 	fmt.Fprintln(os.Stderr, "  -d duration - Valid time units are \"s\", \"m\", \"h\".")

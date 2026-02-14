@@ -40,6 +40,10 @@ func main() {
 		if err := cli.ParseStart(os.Args[2:]).Run(); err != nil {
 			fatal("Error running \"pomo start\": %w", err)
 		}
+	case "rest":
+		if err := cli.ParseRest(os.Args[2:]).Run(); err != nil {
+			fatal("Error running \"pomo start\": %w", err)
+		}
 	case "notify":
 		if err := cli.ParseNotify(os.Args[2:]).Run(); err != nil {
 			fatal("Error running pomo notify: %w", err)
