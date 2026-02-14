@@ -34,7 +34,7 @@ func ParseStart(args []string) *StartCommand {
 }
 
 func (cmd *StartCommand) Run() error {
-	pomodoro := pomo.NewPomodoro(cmd.title, cmd.message, cmd.duration)
+	session := pomo.NewSession(cmd.title, cmd.message, cmd.duration)
 
 	s, err := scheduler.NewDefault()
 	if err != nil {
@@ -48,12 +48,12 @@ func (cmd *StartCommand) Run() error {
 
 	task := scheduler.Task{
 		ID:        strconv.FormatInt(time.Now().Unix(), 16),
-		ExecuteAt: pomodoro.StopTime,
+		ExecuteAt: session.StopTime,
 		Binary:    bin,
 		Args: []string{
 			"notify",
-			"-t", pomodoro.Title,
-			"-m", pomodoro.Message,
+			"-t", session.Title,
+			"-m", session.Message,
 			"--hint", cmd.hint,
 		},
 	}

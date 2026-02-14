@@ -8,7 +8,7 @@ func InitToggl() *Toggl {
 	panic("todo")
 }
 
-func (t *Toggl) Save(pomodoro *pomo.Pomodoro) {
+func (t *Toggl) Save(session *pomo.Session) {
 	panic("todo")
 }
 
