@@ -18,7 +18,7 @@ func InitCsv(filename string) error {
 	defer file.Close()
 
 	writer := csv.NewWriter(file)
-	if err := writer.Write([]string{"title", "start_time", "stop_time", "duration"}); err != nil {
+	if err := writer.Write([]string{"topic", "start_time", "stop_time", "duration"}); err != nil {
 		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
 	}
 

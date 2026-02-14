@@ -14,7 +14,7 @@ import (
 
 // StartCommand is basically a wrapper around notify-send
 type StartCommand struct {
-	title    string
+	topic    string
 	message  string
 	duration time.Duration
 	hint     string
@@ -24,8 +24,8 @@ type StartCommand struct {
 func ParseStart(args []string) *StartCommand {
 	cmd := StartCommand{}
 	fs := flag.NewFlagSet("start", flag.ExitOnError)
-	fs.StringVar(&cmd.title, "t", "Pomodoro session is ended", "Title")
-	fs.StringVar(&cmd.message, "m", "", "Notification message")
+	fs.StringVar(&cmd.topic, "t", "", "Topic of your pomodoro session")
+	fs.StringVar(&cmd.message, "m", "Pomodoro session is ended!", "Notification message")
 	fs.DurationVar(&cmd.duration, "d", 25*time.Minute, "Timer duration")
 	fs.StringVar(&cmd.hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
 	fs.BoolVar(&cmd.useToggl, "toggl", false, "Use toggl integration?")
@@ -34,7 +34,7 @@ func ParseStart(args []string) *StartCommand {
 }
 
 func (cmd *StartCommand) Run() error {
-	session := pomo.NewSession(cmd.title, cmd.message, cmd.duration)
+	session := pomo.NewSession(cmd.topic, cmd.duration)
 
 	s, err := scheduler.NewDefault()
 	if err != nil {
@@ -52,8 +52,8 @@ func (cmd *StartCommand) Run() error {
 		Binary:    bin,
 		Args: []string{
 			"notify",
-			"-t", session.Title,
-			"-m", session.Message,
+			"-t", "Pomodoro",
+			"-m", cmd.message,
 			"--hint", cmd.hint,
 		},
 	}
