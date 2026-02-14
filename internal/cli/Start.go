@@ -36,14 +36,9 @@ func ParseStart(args []string) *StartCommand {
 func (cmd *StartCommand) Run() error {
 	pomodoro := pomo.NewPomodoro(cmd.title, cmd.message, cmd.duration)
 
-	var notifier scheduler.Scheduler
-
-	if utils.HasSystemd() {
-		notifier = &scheduler.SystemdScheduler{}
-	} else if utils.HasAt() {
-		notifier = &scheduler.AtScheduler{}
-	} else {
-		return fmt.Errorf("neither 'systemd-run' nor 'at' found. Please install one of them for background notifications")
+	s, err := scheduler.NewDefault()
+	if err != nil {
+		return err
 	}
 
 	bin, err := os.Executable()
@@ -63,7 +58,7 @@ func (cmd *StartCommand) Run() error {
 		},
 	}
 
-	if err := notifier.Schedule(task); err != nil {
+	if err := s.Schedule(task); err != nil {
 		return err
 	}
 
