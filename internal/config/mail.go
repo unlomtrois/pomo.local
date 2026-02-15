@@ -3,6 +3,8 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/mail"
 	"os"
 	"path/filepath"
 )
@@ -43,6 +45,22 @@ func (m *MailConfig) Load() error {
 
 	if err := json.Unmarshal(data, &m); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *MailConfig) Validate() error {
+	if _, err := mail.ParseAddress(m.Sender); err != nil {
+		return fmt.Errorf("failed to parse host: %w", err)
+	}
+
+	if _, err := mail.ParseAddress(m.Receiver); err != nil {
+		return fmt.Errorf("failed to parse receiver: %w", err)
+	}
+
+	if _, err := net.LookupHost(m.Host); err != nil {
+		return fmt.Errorf("failed lookup host: %w", err)
 	}
 
 	return nil
