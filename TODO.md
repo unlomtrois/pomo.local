@@ -66,6 +66,11 @@
 - [x] uses https://pkg.go.dev/golang.org/x/term#Terminal.ReadPassword to read password
 - [x] uses keyring/dbus, first dependency :(
 
+# feat
+- [x] add mail service
+- [x] `pomo notify --mail` will send an email that the pomo session is ended
+- [x] adding `--mail` in `pomo start` will call `pomo notify` with `--mail` flag
+
 ---
 
 # plan
