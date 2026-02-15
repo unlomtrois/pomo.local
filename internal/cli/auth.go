@@ -5,13 +5,16 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"net"
 	"net/smtp"
 	"os"
+	"strconv"
 	"strings"
 	"syscall"
 
 	"github.com/zalando/go-keyring"
 	"golang.org/x/term"
+	"pomo.local/internal/config"
 )
 
 // AuthCommand is basically a wrapper around notify-send
@@ -62,11 +65,6 @@ func (cmd *AuthCommand) authService(service, label string) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		for i := range bytePassword {
-			bytePassword[i] = 0
-		}
-	}()
 
 	password := strings.TrimSpace(string(bytePassword))
 	err = keyring.Set(service, user, password)
@@ -76,17 +74,40 @@ func (cmd *AuthCommand) authService(service, label string) error {
 	fmt.Printf("\nSuccess! Credentials for %s saved securely.\n", service)
 
 	if service == "pomo-smtp" {
-		fmt.Println("Testing SMTP connection...")
-
 		pass, err := keyring.Get(service, user)
 		if err != nil {
 			return err
 		}
 
-		host := "smtp.gmail.com"
-		auth := smtp.PlainAuth("", user, pass, host)
+		fmt.Printf("Enter your smtp host: ")
+		host, _ := reader.ReadString('\n')
+		host = strings.TrimSpace(host)
 
-		client, err := smtp.Dial(host + ":587")
+		fmt.Printf("Enter your smtp port: ")
+		portString, _ := reader.ReadString('\n')
+		portString = strings.TrimSpace(portString)
+		port, err := strconv.ParseInt(portString, 10, 64)
+		if err != nil {
+			return fmt.Errorf("failed to parse port: %v", err)
+		}
+
+		config := config.MailConfig{
+			Host:     host,
+			Port:     int(port),
+			Sender:   user,
+			Receiver: user,
+		}
+
+		if err := config.Save(); err != nil {
+			return fmt.Errorf("failed to save config, due: %v", err)
+		}
+		fmt.Println("New config successfully saved!")
+
+		fmt.Println("Testing SMTP connection...")
+		auth := smtp.PlainAuth("", config.Sender, pass, config.Host)
+
+		addr := net.JoinHostPort(config.Host, strconv.Itoa(config.Port))
+		client, err := smtp.Dial(addr)
 		if err != nil {
 			return fmt.Errorf("could not connect to SMTP: %v", err)
 		}

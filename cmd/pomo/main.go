@@ -47,7 +47,7 @@ func main() {
 		os.Exit(0)
 	case "notify":
 		if err := cli.ParseNotify(os.Args[2:]).Run(); err != nil {
-			fatal("Error running pomo notify: %w", err)
+			fatal("Error running pomo notify: %v", err)
 		}
 		os.Exit(0)
 	case "auth":
