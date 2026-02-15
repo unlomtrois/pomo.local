@@ -25,7 +25,7 @@ func ParseNotify(args []string) *NotifyCommand {
 	fs.StringVar(&cmd.summary, "summary", "Pomodoro session is ended", "Title")
 	fs.StringVar(&cmd.body, "body", "", "Notification message")
 	fs.StringVar(&cmd.hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
-	fs.BoolVar(&cmd.useEmail, "mail", false, "Send also email")
+	fs.BoolVar(&cmd.useEmail, "email", false, "Send also email")
 	fs.Parse(args)
 	return &cmd
 }
@@ -44,12 +44,12 @@ func (cmd *NotifyCommand) Run() error {
 		}
 
 		if err := cfg.Validate(); err != nil {
-			return fmt.Errorf("Invalid config (try \"pomo auth --mail\" again): %v", err)
+			return fmt.Errorf("Invalid config (try \"pomo auth --email\" again): %v", err)
 		}
 
 		pass, err := keyring.Get("pomo-smtp", cfg.Sender)
 		if err != nil {
-			return fmt.Errorf("Failed to get keyring for sender: %v, %w. (try to \"pomo auth --mail\" again)", cfg.Sender, err)
+			return fmt.Errorf("Failed to get keyring for sender: %v, %w. (try to \"pomo auth --email\" again)", cfg.Sender, err)
 		}
 
 		fmt.Println("send email to", cfg.Receiver)

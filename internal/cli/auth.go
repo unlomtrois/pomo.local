@@ -19,14 +19,14 @@ import (
 
 // AuthCommand is basically a wrapper around notify-send
 type AuthCommand struct {
-	forMail  bool
+	forEmail bool
 	forToggl bool
 }
 
 func ParseAuth(args []string) *AuthCommand {
 	cmd := AuthCommand{}
 	fs := flag.NewFlagSet("auth", flag.ExitOnError)
-	fs.BoolVar(&cmd.forMail, "mail", false, "Auth for SMTP notifications")
+	fs.BoolVar(&cmd.forEmail, "email", false, "Auth for SMTP notifications")
 	fs.BoolVar(&cmd.forToggl, "toggl", false, "Auth for Toggl Track")
 	fs.Parse(args)
 
@@ -39,7 +39,7 @@ func (cmd *AuthCommand) Run() error {
 		return fmt.Errorf("your terminal in non-interactive")
 	}
 
-	if cmd.forMail {
+	if cmd.forEmail {
 		if err := cmd.authService("pomo-smtp", "SMTP App Password"); err != nil {
 			return err
 		}
