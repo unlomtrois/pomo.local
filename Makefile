@@ -5,11 +5,11 @@ BINARY_NAME = pomo
 
 .PHONY: build install clean test
 
-build:
-	go build -o $(BINARY_NAME) -ldflags="-X main.version=$(VERSION)" $(MAIN_PKG)
-
 install:
 	go install -ldflags="-X main.version=$(VERSION)" $(MAIN_PKG)
+
+build:
+	go build -o $(BINARY_NAME) -ldflags="-X main.version=$(VERSION)" $(MAIN_PKG)
 
 test:
 	go test ./...
