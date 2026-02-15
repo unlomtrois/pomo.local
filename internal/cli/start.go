@@ -19,6 +19,7 @@ type StartCommand struct {
 	duration time.Duration
 	hint     string
 	useToggl bool
+	useMail  bool
 }
 
 func ParseStart(args []string) *StartCommand {
@@ -29,6 +30,7 @@ func ParseStart(args []string) *StartCommand {
 	fs.DurationVar(&cmd.duration, "d", 25*time.Minute, "Timer duration")
 	fs.StringVar(&cmd.hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
 	fs.BoolVar(&cmd.useToggl, "toggl", false, "Use toggl integration?")
+	fs.BoolVar(&cmd.useMail, "mail", false, "Send email when the session is over?")
 	fs.Parse(args)
 	return &cmd
 }
@@ -46,16 +48,21 @@ func (cmd *StartCommand) Run() error {
 		return fmt.Errorf("could not find pomo executable: %v", err)
 	}
 
+	args := []string{
+		"notify",
+		"--summary", "Pomodoro",
+		"--body", cmd.message,
+		"--hint", cmd.hint,
+	}
+	if cmd.useMail {
+		args = append(args, "--mail")
+	}
+
 	task := scheduler.Task{
 		ID:        strconv.FormatInt(time.Now().Unix(), 16),
 		ExecuteAt: session.StopTime,
 		Binary:    bin,
-		Args: []string{
-			"notify",
-			"--summary", "Pomodoro",
-			"--body", cmd.message,
-			"--hint", cmd.hint,
-		},
+		Args:      args,
 	}
 
 	if err := s.Schedule(task); err != nil {
