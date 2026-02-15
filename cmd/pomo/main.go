@@ -5,24 +5,10 @@ import (
 	"os"
 
 	"pomo.local/internal/cli"
-	"pomo.local/internal/utils"
 )
 
 // it is filled by -ldflags="-X main.version=$(VERSION)"" in makefile
 var version string = "dev"
-
-var configDir string // XDG_CONFIG_HOME
-var dataDir string   // XDG_DATA_HOME
-
-func init() {
-	var err error
-	if configDir, err = utils.GetConfigDir(); err != nil {
-		fatal("Error getting config directory: %v", err)
-	}
-	if dataDir, err = utils.GetDataDir(); err != nil {
-		fatal("Error getting data directory: %v", err)
-	}
-}
 
 func fatal(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, format+"\n", args...)

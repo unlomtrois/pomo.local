@@ -71,6 +71,9 @@
 - [x] `pomo notify --mail` will send an email that the pomo session is ended
 - [x] adding `--mail` in `pomo start` will call `pomo notify` with `--mail` flag
 
+# refactor
+- use [xdg](https://github.com/adrg/xdg) instead of declaring variables in utils
+
 ---
 
 # plan
@@ -89,5 +92,4 @@
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
 - `--strict` flag that allows only a single pomodoro session to be tracked
 - add `list` command to make systemctl calls to see all pending pomodoro timers
-- use [xdg](https://github.com/adrg/xdg) instead of declaring variables in utils
 - replace keyring with my own package around godbus/dbus

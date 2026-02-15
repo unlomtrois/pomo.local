@@ -1,10 +1,12 @@
 package config
 
-import "pomo.local/internal/utils"
+import (
+	"github.com/adrg/xdg"
+)
 
 type Config interface {
 	Save() error
 	Load() error
 }
 
-var configDirFunc = utils.GetConfigDir
+var configDirFunc = xdg.ConfigFile

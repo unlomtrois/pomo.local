@@ -3,6 +3,7 @@ module pomo.local
 go 1.25.5
 
 require (
+	github.com/adrg/xdg v0.5.3
 	github.com/zalando/go-keyring v0.2.6
 	golang.org/x/term v0.40.0
 )

@@ -1,15 +1,16 @@
 package config
 
 import (
+	"path/filepath"
 	"testing"
 
-	"pomo.local/internal/utils"
+	"github.com/adrg/xdg"
 )
 
 func TestMailConfig(t *testing.T) {
 	tmpDir := t.TempDir()
-	configDirFunc = func() (string, error) { return tmpDir, nil }
-	defer func() { configDirFunc = utils.GetConfigDir }()
+	configDirFunc = func(relPath string) (string, error) { return filepath.Join(tmpDir, relPath), nil }
+	defer func() { configDirFunc = xdg.ConfigFile }()
 
 	cfg := &MailConfig{
 		Host: "smtp.gmail.com",
