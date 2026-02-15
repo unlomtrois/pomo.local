@@ -1,27 +1,15 @@
 # Simple pomodoro cli
 
-basically a wrapper around libnotify's `notify-send` and `systemd-run`.
-
-## build
+It sends notifications using `libnotify` and schedules them using `systemd-run` or `at` (if no systemd).
 
 ```sh
-make build # notice it bakes git version to main.version
+pomo start -t "working"
 ```
 
-## just start
+## features
 
-```sh
-pomo start
-```
+- [x] desktop notifications
+- [x] email notifications
+- [ ] toggl integration
 
-## save to csv
-
-```sh
-pomo start -t "focus" --csv 
-```
-
-## save to toggl
-
-```sh
-pomo start -t "focus" --toggl --token <t> --workspace <w> --user <u>
-```
+Tailored for Linux
