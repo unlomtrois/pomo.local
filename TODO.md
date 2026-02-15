@@ -77,6 +77,7 @@
 ---
 
 # plan
+- add `list` command to make systemctl calls to see all pending pomodoro timers
 
 ---
 
@@ -91,5 +92,5 @@
 - write pomo logs in `~/.local/share/pomo`
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
 - `--strict` flag that allows only a single pomodoro session to be tracked
-- add `list` command to make systemctl calls to see all pending pomodoro timers
 - replace keyring with my own package around godbus/dbus
+- add `stop` command
