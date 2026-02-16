@@ -1,12 +1,15 @@
 package cli
 
 import (
+	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/adrg/xdg"
 	"pomo.local/internal/pomo"
 	"pomo.local/internal/scheduler"
 	"pomo.local/internal/utils"
@@ -38,11 +41,6 @@ func ParseStart(args []string) *StartCommand {
 func (cmd *StartCommand) Run() error {
 	session := pomo.NewSession(cmd.topic, cmd.duration)
 
-	s, err := scheduler.NewDefault()
-	if err != nil {
-		return err
-	}
-
 	bin, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("could not find pomo executable: %v", err)
@@ -65,9 +63,54 @@ func (cmd *StartCommand) Run() error {
 		Args:      args,
 	}
 
+	s, err := scheduler.NewDefault()
+	if err != nil {
+		return err
+	}
+
 	if err := s.Schedule(task); err != nil {
 		return err
 	}
+
+	// --- json task ---
+
+	path, err := xdg.StateFile("pomo/active_task.json")
+	if err != nil {
+		return nil
+	}
+
+	data, err := json.MarshalIndent(task, "", "    ")
+	if err != nil {
+		return nil
+	}
+
+	if err = os.WriteFile(path, data, 0644); err != nil {
+		return err
+	}
+
+	fmt.Println("put task in: ", path)
+
+	// --- csv session ---
+
+	sessionsPath, err := xdg.DataFile("pomo/sessions.csv")
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(sessionsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	if err := writer.Write(session.Strings()); err != nil {
+		return err
+	}
+
+	fmt.Println("put session in: ", sessionsPath)
 
 	return nil
 }
