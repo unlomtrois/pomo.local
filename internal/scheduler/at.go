@@ -3,6 +3,7 @@ package scheduler
 import (
 	"fmt"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 )
@@ -40,7 +41,13 @@ func (_ *AtScheduler) Schedule(task Task) error {
 		return fmt.Errorf("Error: %v\nMake sure 'at' daemon (atd) is running.\n", err)
 	}
 
-	fmt.Printf("You'll be notified at %s\n", task.ExecuteAt.Format("15:04:05"))
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "You'll be notified at %s (via at", task.ExecuteAt.Format("15:04:05"))
+	if slices.Contains(args, "--email") {
+		sb.WriteString(", and via email")
+	}
+	sb.WriteString(")\n")
+	fmt.Print(sb.String())
 	return nil
 }
 

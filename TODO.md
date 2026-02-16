@@ -74,6 +74,9 @@
 # refactor
 - use [xdg](https://github.com/adrg/xdg) instead of declaring variables in utils
 
+# feat
+- if --email flag is provided, scheduler should also inform that it will notify via email as well
+
 ---
 
 # plan

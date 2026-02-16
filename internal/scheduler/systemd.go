@@ -3,6 +3,8 @@ package scheduler
 import (
 	"fmt"
 	"os/exec"
+	"slices"
+	"strings"
 	"time"
 )
 
@@ -13,16 +15,13 @@ func (sd *SystemdScheduler) Schedule(task Task) error {
 	delayStr := fmt.Sprintf("%.3fs", delay.Seconds())
 	unitName := fmt.Sprintf("pomo-notify-%s", task.ID)
 
-	// pomoPath, err := exec.LookPath("pomo")
-	// if err != nil {
-	// 	return fmt.Errorf("could not find pomo executable: %v", err)
-	// }
-	//
 	args := []string{
-		"--user", "--collect", "--unit=" + unitName, "--on-active=" + delayStr, "--timer-property=AccuracySec=100ms",
-		task.Binary,
+		"--user", "--collect",
+		"--unit=" + unitName,
+		"--on-active=" + delayStr,
+		"--timer-property=AccuracySec=100ms",
 	}
-
+	args = append(args, task.Binary)
 	args = append(args, task.Args...)
 
 	cmd := exec.Command("systemd-run", args...)
@@ -31,7 +30,14 @@ func (sd *SystemdScheduler) Schedule(task Task) error {
 		return fmt.Errorf("Failed to schedule notification: %v: %s", err, out)
 	}
 
-	fmt.Printf("You'll be notified at %s (via systemd timer %s)\n", task.ExecuteAt.Format("15:04:05"), unitName)
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "You'll be notified at %s (via systemd timer %s", task.ExecuteAt.Format("15:04:05"), unitName)
+	if slices.Contains(args, "--email") {
+		sb.WriteString(", and via email")
+	}
+	sb.WriteString(")\n")
+	fmt.Print(sb.String())
+
 	return nil
 }
 
