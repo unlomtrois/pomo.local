@@ -80,6 +80,9 @@
 # feat
 - write pomo sessions in `~/.local/share/pomo/sessions.csv`
 
+# feat
+- add `active` command to get the active pomodoro session
+
 ---
 
 # plan
@@ -91,7 +94,6 @@
 - add mdns server, maybe daemon
 - add obsidian markdown integration (provide obsidian links where to export?)
 - add `export` command
-- add `current` command to get the active entry
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
 - add `-v` or `--verbose` flag to log what is exactly happening, e.g. for these systemd-run timer stuff
@@ -99,3 +101,4 @@
 - `--strict` flag that allows only a single pomodoro session to be tracked
 - replace keyring with my own package around godbus/dbus
 - add `stop` command
+- pomo notify should erase the active session
