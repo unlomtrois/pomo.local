@@ -39,6 +39,10 @@ func main() {
 		if err := cli.ParseAuth(os.Args[2:]).Run(); err != nil {
 			log.Fatalf("Failed to auth: %v", err)
 		}
+	case "active":
+		if err := cli.ParseActive(os.Args[2:]).Run(); err != nil {
+			log.Fatal(err)
+		}
 	default:
 		fmt.Fprintln(os.Stderr, "unknown command!")
 		cli.PrintUsage()

@@ -8,10 +8,10 @@ import (
 )
 
 type Session struct { // This thing is saved to csv / database / toggl integration
-	Topic     string        `csv:"topic"`
-	StartTime time.Time     `csv:"start_time"`
-	StopTime  time.Time     `csv:"stop_time"`
-	Duration  time.Duration `csv:"duration"`
+	Topic     string        `json:"topic"`
+	StartTime time.Time     `json:"start_time"`
+	StopTime  time.Time     `json:"stop_time"`
+	Duration  time.Duration `json:"duration"`
 }
 
 func NewSession(topic string, duration time.Duration) *Session {

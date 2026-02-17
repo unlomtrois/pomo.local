@@ -73,44 +73,65 @@ func (cmd *StartCommand) Run() error {
 	}
 
 	// --- json task ---
+	{
+		path, err := xdg.StateFile("pomo/active_task.json")
+		if err != nil {
+			return nil
+		}
 
-	path, err := xdg.StateFile("pomo/active_task.json")
-	if err != nil {
-		return nil
+		data, err := json.MarshalIndent(task, "", "    ")
+		if err != nil {
+			return nil
+		}
+
+		if err = os.WriteFile(path, data, 0644); err != nil {
+			return err
+		}
+
+		fmt.Println("put task in: ", path)
 	}
 
-	data, err := json.MarshalIndent(task, "", "    ")
-	if err != nil {
-		return nil
-	}
+	// --- json session ---
+	{
+		path, err := xdg.StateFile("pomo/active_session.json")
+		if err != nil {
+			return nil
+		}
 
-	if err = os.WriteFile(path, data, 0644); err != nil {
-		return err
-	}
+		data, err := json.MarshalIndent(session, "", "    ")
+		if err != nil {
+			return nil
+		}
 
-	fmt.Println("put task in: ", path)
+		if err = os.WriteFile(path, data, 0644); err != nil {
+			return err
+		}
+
+		fmt.Println("put session in: ", path)
+	}
 
 	// --- csv session ---
+	{
+		sessionsPath, err := xdg.DataFile("pomo/sessions.csv")
+		if err != nil {
+			return err
+		}
 
-	sessionsPath, err := xdg.DataFile("pomo/sessions.csv")
-	if err != nil {
-		return err
+		file, err := os.OpenFile(sessionsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		writer := csv.NewWriter(file)
+		defer writer.Flush()
+
+		if err := writer.Write(session.Strings()); err != nil {
+			return err
+		}
+
+		fmt.Println("put session in: ", sessionsPath)
 	}
-
-	file, err := os.OpenFile(sessionsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	if err := writer.Write(session.Strings()); err != nil {
-		return err
-	}
-
-	fmt.Println("put session in: ", sessionsPath)
 
 	return nil
 }
