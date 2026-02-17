@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"pomo.local/internal/cli"
@@ -9,11 +10,6 @@ import (
 
 // it is filled by -ldflags="-X main.version=$(VERSION)"" in makefile
 var version string = "dev"
-
-func fatal(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, format+"\n", args...)
-	os.Exit(1)
-}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -24,23 +20,20 @@ func main() {
 	switch os.Args[1] {
 	case "start":
 		if err := cli.ParseStart(os.Args[2:]).Run(); err != nil {
-			fatal("Error running \"pomo start\": %w", err)
+			log.Fatalf("Error running \"pomo start\": %v", err)
 		}
 	case "rest":
 		if err := cli.ParseRest(os.Args[2:]).Run(); err != nil {
-			fatal("Error running \"pomo start\": %w", err)
+			log.Fatalf("Error running \"pomo start\": %v", err)
 		}
-		os.Exit(0)
 	case "notify":
 		if err := cli.ParseNotify(os.Args[2:]).Run(); err != nil {
-			fatal("Error running pomo notify: %v", err)
+			log.Fatalf("Error running pomo notify: %v", err)
 		}
-		os.Exit(0)
 	case "auth":
 		if err := cli.ParseAuth(os.Args[2:]).Run(); err != nil {
-			fatal("Failed to auth: %w", err)
+			log.Fatalf("Failed to auth: %v", err)
 		}
-		os.Exit(0)
 	default:
 		if cli.ParseVersionFlag() {
 			fmt.Fprintln(os.Stderr, version)
