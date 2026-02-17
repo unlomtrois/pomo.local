@@ -17,6 +17,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if cli.ParseVersionFlag() {
+		fmt.Println(version)
+		return
+	}
+
 	switch os.Args[1] {
 	case "start":
 		if err := cli.ParseStart(os.Args[2:]).Run(); err != nil {
@@ -35,10 +40,6 @@ func main() {
 			log.Fatalf("Failed to auth: %v", err)
 		}
 	default:
-		if cli.ParseVersionFlag() {
-			fmt.Fprintln(os.Stderr, version)
-			os.Exit(0)
-		}
 		fmt.Fprintln(os.Stderr, "unknown command!")
 		cli.PrintUsage()
 		os.Exit(1)
