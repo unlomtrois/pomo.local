@@ -102,3 +102,4 @@
 - replace keyring with my own package around godbus/dbus
 - add `stop` command
 - pomo notify should erase the active session
+- add nix flake or something, to make it work on nixos
