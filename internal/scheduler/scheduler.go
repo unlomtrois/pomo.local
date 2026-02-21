@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 )
 
@@ -12,7 +11,7 @@ type Scheduler interface {
 }
 
 func hasSystemd() bool {
-	_, err := os.Stat("/run/systemd/system")
+	_, err := exec.LookPath("systemd-run")
 	return err == nil
 }
 
