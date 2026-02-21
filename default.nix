@@ -13,7 +13,6 @@ pkgs.buildGoModule rec {
 
     vendorHash = "sha256-8kIP7fxIoYq+09EJIM1TmkO9O3zY04SVyDrNMgdBhEI=";
 
-    nativeBuildInputs = [ pkgs.pkg-config ];
     buildInputs = [ pkgs.libnotify ];
 
     meta = with pkgs.lib; {
