@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> {} }:
 
 pkgs.mkShell {
-    packages = with pkgs; [ go_1_26 libgcc gnumake libnotify ];
+    packages = with pkgs; [ go_1_26 gcc libnotify ];
 
     shellHook = ''
       echo "Dev environment loaded!"
