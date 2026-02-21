@@ -1,18 +1,15 @@
 { pkgs ? import <nixpkgs> {} }:
 
 pkgs.buildGoModule rec {
-    pname = "pomo.local";
+    pname = "pomo-local";
     version = "0.23.0";
-
-    src = ./.;
+    src = pkgs.fetchFromGitHub {
+        owner = "unlomtrois";
+        repo = "pomo.local";
+        tag = "v${version}";
+        hash = "sha256-o84cd3OBZTWEdHiWknHGSDNZKvixPVRPUS5XqW26KFI=";
+    };
     subPackages = [ "cmd/pomo" ];
-
-    #src = fetchFromGitHub {
-    #    owner = "unlomtrois";
-    #    repo = "pomo.local";
-    #    tag = "v${version}";
-    #    hash = "";
-    #};
 
     vendorHash = "sha256-8kIP7fxIoYq+09EJIM1TmkO9O3zY04SVyDrNMgdBhEI=";
 
