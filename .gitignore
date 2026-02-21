@@ -22,5 +22,6 @@
 
 # binary
 /pomo
+/result
 
 *.csv

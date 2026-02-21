@@ -1,0 +1,30 @@
+{ pkgs ? import <nixpkgs> {} }:
+
+pkgs.buildGoModule rec {
+    pname = "pomo.local";
+    version = "0.23.0";
+
+    src = ./.;
+    subPackages = [ "cmd/pomo" ];
+
+    #src = fetchFromGitHub {
+    #    owner = "unlomtrois";
+    #    repo = "pomo.local";
+    #    tag = "v${version}";
+    #    hash = "";
+    #};
+
+    vendorHash = "sha256-8kIP7fxIoYq+09EJIM1TmkO9O3zY04SVyDrNMgdBhEI=";
+
+    nativeBuildInputs = [ pkgs.pkg-config ];
+    buildInputs = [ pkgs.libnotify ];
+
+    meta = with pkgs.lib; {
+        description = "Simple pomodoro cli";
+        homepage = "https://github.com/unlomtrois/pomo.local";
+        license = licenses.mit;
+        platforms = platforms.linux;
+        mainProgram = "pomo";
+        maintainers = with maintainers; [ unlomtrois ];
+    };
+}
