@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -23,6 +24,7 @@ type StartCommand struct {
 	hint     string
 	useToggl bool
 	useEmail bool
+	verbose  bool
 }
 
 func ParseStart(args []string) *StartCommand {
@@ -34,7 +36,14 @@ func ParseStart(args []string) *StartCommand {
 	fs.StringVar(&cmd.hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
 	fs.BoolVar(&cmd.useToggl, "toggl", false, "Use toggl integration?")
 	fs.BoolVar(&cmd.useEmail, "email", false, "Send email when the session is over?")
+	fs.BoolVar(&cmd.verbose, "v", false, "Verbose output, e.g. opened files, making http requests")
+	fs.BoolVar(&cmd.verbose, "verbose", false, "Verbose output, e.g. opened files, making http requests")
 	fs.Parse(args)
+
+	if cmd.verbose {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
+
 	return &cmd
 }
 
@@ -88,7 +97,7 @@ func (cmd *StartCommand) Run() error {
 			return err
 		}
 
-		fmt.Println("put task in: ", path)
+		slog.Debug("Updated active_task", "path", path)
 	}
 
 	// --- json session ---
@@ -107,7 +116,7 @@ func (cmd *StartCommand) Run() error {
 			return err
 		}
 
-		fmt.Println("put session in: ", path)
+		slog.Debug("Updated active_session", "path", path)
 	}
 
 	// --- csv session ---
@@ -130,7 +139,7 @@ func (cmd *StartCommand) Run() error {
 			return err
 		}
 
-		fmt.Println("put session in: ", sessionsPath)
+		slog.Debug("Updated session.csv", "path", sessionsPath)
 	}
 
 	return nil
