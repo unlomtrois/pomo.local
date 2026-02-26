@@ -83,66 +83,78 @@ func (cmd *StartCommand) Run() error {
 		return err
 	}
 
-	// --- json task ---
-	{
-		path, err := xdg.StateFile("pomo/active_task.json")
-		if err != nil {
-			return nil
-		}
-
-		data, err := json.MarshalIndent(task, "", "    ")
-		if err != nil {
-			return nil
-		}
-
-		if err = os.WriteFile(path, data, 0644); err != nil {
-			return err
-		}
-
-		slog.Debug("Updated active_task", "path", path)
+	if err := saveActiveTask(task); err != nil {
+		return err
 	}
 
-	// --- json session ---
-	{
-		path, err := xdg.StateFile("pomo/active_session.json")
-		if err != nil {
-			return nil
-		}
-
-		data, err := json.MarshalIndent(session, "", "    ")
-		if err != nil {
-			return nil
-		}
-
-		if err = os.WriteFile(path, data, 0644); err != nil {
-			return err
-		}
-
-		slog.Debug("Updated active_session", "path", path)
+	if err := saveSession(session); err != nil {
+		return err
 	}
 
-	// --- csv session ---
-	{
-		sessionsPath, err := xdg.DataFile("pomo/sessions.csv")
-		if err != nil {
-			return err
-		}
-
-		file, err := os.OpenFile(sessionsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		writer := csv.NewWriter(file)
-		defer writer.Flush()
-
-		if err := writer.Write(session.Strings()); err != nil {
-			return err
-		}
-
-		slog.Debug("Updated session.csv", "path", sessionsPath)
+	if err := appendSessionCsv(session); err != nil {
+		return err
 	}
 
+	return nil
+}
+
+func saveActiveTask(task scheduler.Task) error {
+	path, err := xdg.StateFile("pomo/active_task.json")
+	if err != nil {
+		return nil
+	}
+
+	data, err := json.MarshalIndent(task, "", "    ")
+	if err != nil {
+		return nil
+	}
+
+	if err = os.WriteFile(path, data, 0644); err != nil {
+		return err
+	}
+
+	slog.Debug("Updated active_task", "path", path)
+	return nil
+}
+
+func saveSession(session *pomo.Session) error {
+	path, err := xdg.StateFile("pomo/active_session.json")
+	if err != nil {
+		return nil
+	}
+
+	data, err := json.MarshalIndent(session, "", "    ")
+	if err != nil {
+		return nil
+	}
+
+	if err = os.WriteFile(path, data, 0644); err != nil {
+		return err
+	}
+
+	slog.Debug("Updated active_session", "path", path)
+	return nil
+}
+
+func appendSessionCsv(session *pomo.Session) error {
+	sessionsPath, err := xdg.DataFile("pomo/sessions.csv")
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(sessionsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	if err := writer.Write(session.Strings()); err != nil {
+		return err
+	}
+
+	slog.Debug("Updated session.csv", "path", sessionsPath)
 	return nil
 }
