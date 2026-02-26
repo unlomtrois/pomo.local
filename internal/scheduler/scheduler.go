@@ -20,13 +20,13 @@ func hasAt() bool {
 	return err == nil
 }
 
-func NewDefault() (Scheduler, error) {
+func NewDefault(verbose bool) (Scheduler, error) {
 	if hasSystemd() {
-		return &SystemdScheduler{}, nil
+		return &SystemdScheduler{verbose}, nil
 	}
 
 	if hasAt() {
-		return &AtScheduler{}, nil
+		return &AtScheduler{verbose}, nil
 	}
 
 	return nil, fmt.Errorf("neither 'systemd-run' nor 'at' found. Please install one of them for background notifications")

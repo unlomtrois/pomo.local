@@ -49,6 +49,7 @@ func ParseStart(args []string) *StartCommand {
 
 func (cmd *StartCommand) Run() error {
 	session := pomo.NewSession(cmd.topic, cmd.duration)
+	slog.Debug("Prepared session:", "session", session)
 
 	bin, err := os.Executable()
 	if err != nil {
@@ -71,8 +72,9 @@ func (cmd *StartCommand) Run() error {
 		Binary:    bin,
 		Args:      args,
 	}
+	slog.Debug("Prepared task:", "task", task)
 
-	s, err := scheduler.NewDefault()
+	s, err := scheduler.NewDefault(cmd.verbose)
 	if err != nil {
 		return err
 	}

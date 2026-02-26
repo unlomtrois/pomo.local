@@ -2,13 +2,16 @@ package scheduler
 
 import (
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"slices"
 	"strings"
 	"time"
 )
 
-type SystemdScheduler struct{}
+type SystemdScheduler struct {
+	verbose bool
+}
 
 func (sd *SystemdScheduler) Schedule(task Task) error {
 	delay := max(time.Until(task.ExecuteAt), 0)
@@ -21,14 +24,20 @@ func (sd *SystemdScheduler) Schedule(task Task) error {
 		"--on-active=" + delayStr,
 		"--timer-property=AccuracySec=100ms",
 	}
-	args = append(args, task.Binary)
-	args = append(args, task.Args...)
 
+	taskArgs := []string{task.Binary}
+	taskArgs = append(taskArgs, task.Args...)
+	slog.Debug("Task:", "cmd", strings.Join(taskArgs, " "))
+
+	args = append(args, taskArgs...)
 	cmd := exec.Command("systemd-run", args...)
+	slog.Debug("Scheduling command:", "cmd", cmd.String())
 
-	if out, err := cmd.CombinedOutput(); err != nil {
+	out, err := cmd.CombinedOutput()
+	if err != nil {
 		return fmt.Errorf("Failed to schedule notification: %v: %s", err, out)
 	}
+	slog.Debug("systemd-run's output:", "out", out)
 
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "You'll be notified at %s (via systemd timer %s", task.ExecuteAt.Format("15:04:05"), unitName)

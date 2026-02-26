@@ -8,7 +8,9 @@ import (
 	"time"
 )
 
-type AtScheduler struct{}
+type AtScheduler struct {
+	verbose bool
+}
 
 func (_ *AtScheduler) Schedule(task Task) error {
 	if time.Until(task.ExecuteAt) < 1*time.Minute {

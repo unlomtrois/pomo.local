@@ -83,6 +83,9 @@
 # feat
 - add `active` command to get the active pomodoro session
 
+# feat
+- add `-v --verbose` flag to log what is exactly happening, e.g. for these systemd-run timer stuff
+
 ---
 
 # plan
@@ -96,7 +99,6 @@
 - add `export` command
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
-- add `-v` or `--verbose` flag to log what is exactly happening, e.g. for these systemd-run timer stuff
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
 - `--strict` flag that allows only a single pomodoro session to be tracked
 - replace keyring with my own package around godbus/dbus
