@@ -89,6 +89,9 @@
 # feat
 - add shell.nix and default.nix, to make it work on nixos
 
+# feat
+- pomo notify erases the active session & active task in .local/state
+
 ---
 
 # plan
@@ -106,4 +109,3 @@
 - `--strict` flag that allows only a single pomodoro session to be tracked
 - replace keyring with my own package around godbus/dbus
 - add `stop` command
-- pomo notify should erase the active session

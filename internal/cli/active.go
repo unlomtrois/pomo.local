@@ -38,7 +38,7 @@ func (cmd *ActiveCommand) Run() error {
 		return nil
 	}
 
-	slog.Debug("Read active session:", "path", activeSessionPath)
+	slog.Debug("Read active_session:", "path", activeSessionPath)
 	data, err := os.ReadFile(activeSessionPath)
 	if err != nil {
 		if os.IsNotExist(err) {

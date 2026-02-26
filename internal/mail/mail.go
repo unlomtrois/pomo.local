@@ -11,7 +11,6 @@ import (
 )
 
 func SendMail(subject, body string) error {
-	fmt.Println("sending email...")
 	cfg := &config.MailConfig{}
 	if err := cfg.Load(); err != nil {
 		return err

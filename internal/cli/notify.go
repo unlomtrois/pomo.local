@@ -2,7 +2,10 @@ package cli
 
 import (
 	"flag"
+	"log/slog"
+	"os"
 
+	"github.com/adrg/xdg"
 	"pomo.local/internal/mail"
 	"pomo.local/internal/notifier"
 	"pomo.local/internal/utils"
@@ -32,11 +35,62 @@ func (cmd *NotifyCommand) Run() error {
 		return err
 	}
 
-	if !cmd.useEmail {
+	slog.Debug("Removing active_session")
+	if err := removeActiveSession(); err != nil {
+		return err
+	}
+
+	slog.Debug("Removing active_task")
+	if err := removeActiveTask(); err != nil {
+		return err
+	}
+
+	if cmd.useEmail {
+		slog.Debug("Sending mail")
+		if err := mail.SendMail(cmd.summary, cmd.body); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func removeActiveSession() error {
+	activeSessionPath, err := xdg.StateFile("pomo/active_session.json")
+	if err != nil {
 		return nil
 	}
 
-	if err := mail.SendMail(cmd.summary, cmd.body); err != nil {
+	slog.Debug("Read active_session:", "path", activeSessionPath)
+	if _, err := os.Stat(activeSessionPath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		slog.Debug("active_session not found:", "path", activeSessionPath)
+	}
+
+	if err := os.Remove(activeSessionPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func removeActiveTask() error {
+	activeTaskPath, err := xdg.StateFile("pomo/active_task.json")
+	if err != nil {
+		return nil
+	}
+
+	slog.Debug("Read active_task:", "path", activeTaskPath)
+	if _, err := os.Stat(activeTaskPath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		slog.Debug("active_task not found:", "path", activeTaskPath)
+	}
+
+	if err := os.Remove(activeTaskPath); err != nil {
 		return err
 	}
 
