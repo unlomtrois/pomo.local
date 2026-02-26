@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -11,36 +12,34 @@ import (
 	"pomo.local/internal/pomo"
 )
 
-// StartCommand is basically a wrapper around notify-send
 type ActiveCommand struct {
-	topic    string
-	message  string
-	duration time.Duration
-	hint     string
-	useToggl bool
-	useEmail bool
+	verbose bool
+	remove  bool
 }
 
 func ParseActive(args []string) *ActiveCommand {
 	cmd := ActiveCommand{}
 	fs := flag.NewFlagSet("active", flag.ExitOnError)
-	// fs.StringVar(&cmd.topic, "t", "", "Topic of your pomodoro session")
-	// fs.StringVar(&cmd.message, "m", "Pomodoro session is ended!", "Notification message")
-	// fs.DurationVar(&cmd.duration, "d", 25*time.Minute, "Timer duration")
-	// fs.StringVar(&cmd.hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
-	// fs.BoolVar(&cmd.useToggl, "toggl", false, "Use toggl integration?")
-	// fs.BoolVar(&cmd.useEmail, "email", false, "Send email when the session is over?")
+	fs.BoolVar(&cmd.verbose, "v", false, "Verbose output, e.g. opened files, making http requests")
+	fs.BoolVar(&cmd.verbose, "verbose", false, "Verbose output, e.g. opened files, making http requests")
+	fs.BoolVar(&cmd.remove, "remove", false, "Remove active session? e.g. if it is outdated and was not removed automatically")
 	fs.Parse(args)
+
+	if cmd.verbose {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
+
 	return &cmd
 }
 
 func (cmd *ActiveCommand) Run() error {
-	path, err := xdg.StateFile("pomo/active_session.json")
+	activeSessionPath, err := xdg.StateFile("pomo/active_session.json")
 	if err != nil {
 		return nil
 	}
 
-	data, err := os.ReadFile(path)
+	slog.Debug("Read active session:", "path", activeSessionPath)
+	data, err := os.ReadFile(activeSessionPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			fmt.Println("No active pomodoro session")
@@ -53,7 +52,20 @@ func (cmd *ActiveCommand) Run() error {
 	if err := json.Unmarshal(data, &session); err != nil {
 		return err
 	}
-	fmt.Printf("Active session: %s, ends at: %s\n", session.Topic, session.StopTime.Format("15:04:05"))
+	fmt.Printf("Active session topic: %s, ends at: %s\n", session.Topic, session.StopTime.Format("15:04:05"))
+
+	if time.Now().Compare(session.StopTime) > 0 {
+		slog.Warn("active session is outdated")
+		if cmd.remove {
+			slog.Info("Removing active_session file:", "path", activeSessionPath)
+			if err := os.Remove(activeSessionPath); err != nil {
+				return err
+			}
+			slog.Info("Successfully removed active_session file:", "path", activeSessionPath)
+		} else {
+			slog.Info("You can remove it by adding --remove flag")
+		}
+	}
 
 	return nil
 }
