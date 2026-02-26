@@ -2,16 +2,18 @@
 
 pkgs.buildGoModule rec {
     pname = "pomo-local";
-    version = "0.23.0";
+    version = "0.24.0";
     src = pkgs.fetchFromGitHub {
         owner = "unlomtrois";
         repo = "pomo.local";
         tag = "v${version}";
-        hash = "sha256-o84cd3OBZTWEdHiWknHGSDNZKvixPVRPUS5XqW26KFI=";
+        hash = "sha256-ZdfV19gvMB70RqcezrgQbnzNwn3wjw0+1cDYTif8AN0=";
     };
     subPackages = [ "cmd/pomo" ];
 
     vendorHash = "sha256-8kIP7fxIoYq+09EJIM1TmkO9O3zY04SVyDrNMgdBhEI=";
+
+    ldflags=["-X main.version=${version}"];
 
     buildInputs = [ pkgs.libnotify ];
 
