@@ -2,7 +2,7 @@
 
 pkgs.buildGoModule rec {
     pname = "pomo-local";
-    version = "0.24.0";
+    version = "0.25.0";
     src = pkgs.fetchFromGitHub {
         owner = "unlomtrois";
         repo = "pomo.local";
