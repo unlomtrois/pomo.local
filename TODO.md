@@ -92,10 +92,14 @@
 # feat
 - pomo notify erases the active session & active task in .local/state
 
+# feat
+- ~~add `list` command to make systemctl calls to see all pending pomodoro timers~~
+- restrict pomo with a single pomodoro session. So, starting a new session will fail with warning
+
 ---
 
 # plan
-- add `list` command to make systemctl calls to see all pending pomodoro timers
+- add `stop` command (`You can wait until it ends or stop it with \"stop\" command`)
 
 ---
 
@@ -106,6 +110,4 @@
 - add `--markdown <pomodoro.md>` flag to export to markdown
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
-- `--strict` flag that allows only a single pomodoro session to be tracked
 - replace keyring with my own package around godbus/dbus
-- add `stop` command

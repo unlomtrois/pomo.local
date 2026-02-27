@@ -3,8 +3,10 @@ package cli
 import (
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"strconv"
@@ -47,7 +49,22 @@ func ParseStart(args []string) *StartCommand {
 	return &cmd
 }
 
+func checkPomodoroSession() error {
+	slog.Debug("Search for active_session:", "path", "pomo/active_session.json")
+	if _, err := xdg.SearchStateFile("pomo/active_session.json"); err != nil {
+		// file not found, great
+		slog.Debug("File %s not found: %w", "pomo/active_session.json", err)
+		return fs.ErrNotExist
+	}
+	return fs.ErrExist
+}
+
 func (cmd *StartCommand) Run() error {
+	// check that there is no current session
+	if err := checkPomodoroSession(); errors.Is(err, fs.ErrExist) {
+		return fmt.Errorf("You can only have 1 active pomodoro session at once.")
+	}
+
 	session := pomo.NewSession(cmd.topic, cmd.duration)
 	slog.Debug("Prepared session:", "session", session)
 
