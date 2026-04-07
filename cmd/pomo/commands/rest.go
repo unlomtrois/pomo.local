@@ -20,7 +20,7 @@ func init() {
 	restCmd.Flags().Bool("email", false, "Send email when the session is over")
 }
 
-func runRest(cmd *cobra.Command, args []string) error {
+func runRest(cmd *cobra.Command, _ []string) error {
 	duration, _ := cmd.Flags().GetDuration("duration")
 	useEmail, _ := cmd.Flags().GetBool("email")
 

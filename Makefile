@@ -16,3 +16,6 @@ test:
 
 clean:
 	rm -f $(BINARY_NAME)
+
+lint:
+    golangci-lint run ./...

@@ -1,3 +1,4 @@
+// Package pomo defines the core session type for the pomodoro timer.
 package pomo
 
 import (
@@ -7,13 +8,15 @@ import (
 	"time"
 )
 
-type Session struct { // This thing is saved to csv / database / toggl integration
+// Session represents a single pomodoro work session saved to CSV, database, and Toggl.
+type Session struct {
 	Topic     string        `json:"topic"`
 	StartTime time.Time     `json:"start_time"`
 	StopTime  time.Time     `json:"stop_time"`
 	Duration  time.Duration `json:"duration"`
 }
 
+// NewSession creates a new Session starting now with the given topic and duration.
 func NewSession(topic string, duration time.Duration) *Session {
 	startTime := time.Now()
 	stopTime := startTime.Add(duration)
@@ -33,6 +36,7 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%02d:%02d", h, m)
 }
 
+// Strings returns the session fields as a slice for CSV serialization.
 func (p *Session) Strings() []string {
 	startTime := p.StartTime.Format(time.RFC3339) // in utc
 	stopTime := p.StopTime.Format(time.RFC3339)   // in utc

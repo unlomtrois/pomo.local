@@ -9,10 +9,12 @@ import (
 	"time"
 )
 
+// SystemdScheduler schedules notifications using systemd transient timers.
 type SystemdScheduler struct {
 	verbose bool
 }
 
+// Schedule creates a transient systemd timer to execute the task at the specified time.
 func (sd *SystemdScheduler) Schedule(task Task) error {
 	delay := max(time.Until(task.ExecuteAt), 0)
 	delayStr := fmt.Sprintf("%.3fs", delay.Seconds())
@@ -35,7 +37,7 @@ func (sd *SystemdScheduler) Schedule(task Task) error {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Failed to schedule notification: %v: %s", err, out)
+		return fmt.Errorf("failed to schedule notification: %v: %s", err, out)
 	}
 	slog.Debug("systemd-run's output:", "out", out)
 
@@ -50,6 +52,7 @@ func (sd *SystemdScheduler) Schedule(task Task) error {
 	return nil
 }
 
-func (sd *SystemdScheduler) Cancel(taskID string) error {
+// Cancel cancels a previously scheduled systemd timer by task ID.
+func (sd *SystemdScheduler) Cancel(_ string) error {
 	panic("todo")
 }

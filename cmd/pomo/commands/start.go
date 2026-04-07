@@ -36,7 +36,7 @@ func init() {
 	startCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 }
 
-func runStart(cmd *cobra.Command, args []string) error {
+func runStart(cmd *cobra.Command, _ []string) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	if verbose {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
@@ -54,7 +54,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 func executeStart(topic, message string, duration time.Duration, hint string, useEmail, verbose bool) error {
 	// check that there is no current session
 	if err := checkPomodoroSession(); errors.Is(err, fs.ErrExist) {
-		return fmt.Errorf("You can only have 1 active pomodoro session at once.")
+		return fmt.Errorf("you can only have 1 active pomodoro session at once")
 	}
 
 	session := pomo.NewSession(topic, duration)

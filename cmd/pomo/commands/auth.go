@@ -30,7 +30,7 @@ func init() {
 	authCmd.Flags().Bool("toggl", false, "Auth for Toggl Track")
 }
 
-func runAuth(cmd *cobra.Command, args []string) error {
+func runAuth(cmd *cobra.Command, _ []string) error {
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
 		return fmt.Errorf("your terminal in non-interactive")
@@ -117,7 +117,7 @@ func authService(service, label string) error {
 		}
 
 		if err = client.Auth(auth); err != nil {
-			return fmt.Errorf("Auth failed: invalid credentials or App Password required")
+			return fmt.Errorf("auth failed: invalid credentials or App Password required")
 		}
 		fmt.Println("Success! SMTP credentials verified successfully!")
 	}

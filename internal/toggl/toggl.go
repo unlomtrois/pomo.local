@@ -2,13 +2,16 @@ package toggl
 
 import "pomo.local/internal/pomo"
 
+// Toggl integrates session saving with the Toggl Track service.
 type Toggl struct{}
 
+// InitToggl initializes the Toggl integration.
 func InitToggl() *Toggl {
 	panic("todo")
 }
 
-func (t *Toggl) Save(session *pomo.Session) {
+// Save persists the session to Toggl Track.
+func (t *Toggl) Save(_ *pomo.Session) {
 	panic("todo")
 }
 

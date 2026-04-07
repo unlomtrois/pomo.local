@@ -1,3 +1,4 @@
+// Package utils provides shared helpers for notifications and durations.
 package utils
 
 import (

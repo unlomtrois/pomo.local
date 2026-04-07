@@ -1,3 +1,4 @@
+// Package scheduler provides task scheduling via systemd or at.
 package scheduler
 
 import (
@@ -8,11 +9,13 @@ import (
 	"time"
 )
 
+// AtScheduler schedules notifications using the POSIX at command.
 type AtScheduler struct {
 	verbose bool
 }
 
-func (_ *AtScheduler) Schedule(task Task) error {
+// Schedule queues the task using at for execution at the specified time.
+func (*AtScheduler) Schedule(task Task) error {
 	if time.Until(task.ExecuteAt) < 1*time.Minute {
 		fmt.Println("Warning: \"at\" does not support sub-minute precision")
 	}
@@ -28,19 +31,19 @@ func (_ *AtScheduler) Schedule(task Task) error {
 	sleepAndNotify := fmt.Sprintf("sleep %d && %s", task.ExecuteAt.Second(), notifyCmd)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return fmt.Errorf("Error creating stdin pipe: %v\n", err)
+		return fmt.Errorf("error creating stdin pipe: %v", err)
 	}
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("Error starting at command: %v\n", err)
+		return fmt.Errorf("error starting at command: %v", err)
 	}
 	if _, err = stdin.Write([]byte(sleepAndNotify + "\n")); err != nil {
-		return fmt.Errorf("Error writing to stdin: %v\n", err)
+		return fmt.Errorf("error writing to stdin: %v", err)
 	}
 	if err := stdin.Close(); err != nil {
-		return fmt.Errorf("Error closing stdin: %v\n", err)
+		return fmt.Errorf("error closing stdin: %v", err)
 	}
 	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("Error: %v\nMake sure 'at' daemon (atd) is running.\n", err)
+		return fmt.Errorf("error running at command: %v (make sure 'at' daemon (atd) is running)", err)
 	}
 
 	var sb strings.Builder
@@ -53,6 +56,7 @@ func (_ *AtScheduler) Schedule(task Task) error {
 	return nil
 }
 
-func (_ *AtScheduler) Cancel(taskID string) error {
+// Cancel cancels a previously scheduled at job by task ID.
+func (*AtScheduler) Cancel(_ string) error {
 	panic("todo")
 }

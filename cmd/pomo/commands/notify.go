@@ -26,7 +26,7 @@ func init() {
 	notifyCmd.Flags().Bool("email", false, "Send also email")
 }
 
-func runNotify(cmd *cobra.Command, args []string) error {
+func runNotify(cmd *cobra.Command, _ []string) error {
 	summary, _ := cmd.Flags().GetString("summary")
 	body, _ := cmd.Flags().GetString("body")
 	hint, _ := cmd.Flags().GetString("hint")

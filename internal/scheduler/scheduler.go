@@ -5,6 +5,7 @@ import (
 	"os/exec"
 )
 
+// Scheduler schedules and cancels background notification tasks.
 type Scheduler interface {
 	Schedule(task Task) error
 	Cancel(taskID string) error
@@ -20,6 +21,7 @@ func hasAt() bool {
 	return err == nil
 }
 
+// NewDefault returns a SystemdScheduler if systemd-run is available, otherwise an AtScheduler.
 func NewDefault(verbose bool) (Scheduler, error) {
 	if hasSystemd() {
 		return &SystemdScheduler{verbose}, nil

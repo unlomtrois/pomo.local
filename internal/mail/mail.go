@@ -1,3 +1,4 @@
+// Package mail provides SMTP email notification support.
 package mail
 
 import (
@@ -10,6 +11,7 @@ import (
 	"pomo.local/internal/config"
 )
 
+// SendMail sends an email notification using the stored SMTP config and keyring credentials.
 func SendMail(subject, body string) error {
 	cfg := &config.MailConfig{}
 	if err := cfg.Load(); err != nil {
@@ -17,18 +19,18 @@ func SendMail(subject, body string) error {
 	}
 
 	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("Invalid config (try \"pomo auth --email\" again): %v", err)
+		return fmt.Errorf("invalid config (try \"pomo auth --email\" again): %v", err)
 	}
 
 	password, err := keyring.Get("pomo-smtp", cfg.Sender)
 	if err != nil {
-		return fmt.Errorf("Failed to get keyring for sender: %v, %w. (try to \"pomo auth --email\" again)", cfg.Sender, err)
+		return fmt.Errorf("failed to get keyring for sender: %v, %w. (try to \"pomo auth --email\" again)", cfg.Sender, err)
 	}
 
 	fmt.Println("send email to", cfg.Receiver)
 	err = sendMail(cfg, password, "Pomo:"+subject, body)
 	if err != nil {
-		return fmt.Errorf("Failed to send an email: %v", err)
+		return fmt.Errorf("failed to send an email: %v", err)
 	}
 
 	fmt.Println("Mail sended!")

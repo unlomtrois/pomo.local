@@ -1,3 +1,4 @@
+// Package commands implements the pomo CLI subcommands.
 package commands
 
 import (
@@ -25,7 +26,7 @@ func init() {
 	activeCmd.Flags().Bool("remove", false, "Remove outdated active session")
 }
 
-func runActive(cmd *cobra.Command, args []string) error {
+func runActive(cmd *cobra.Command, _ []string) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	if verbose {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
