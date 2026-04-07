@@ -6,7 +6,7 @@
 - add `pomo toggl auth` command to fill toggl config to not ask for toggl-related flags
 - what if skipping `-t`, like `pomo start` would use the last used one instead of the default? or it could be `pomo continue`
 - replace keyring with my own package around godbus/dbus
-
+- move from makefile to [Taskfile](https://github.com/go-task/task)
 ---
 
 # plan

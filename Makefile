@@ -3,7 +3,7 @@ VERSION ?= $(shell git describe --tags --always || echo "dev")
 MAIN_PKG = ./cmd/pomo
 BINARY_NAME = pomo
 
-.PHONY: build install clean test
+.PHONY: build install clean test lint
 
 build:
 	go build -o $(BINARY_NAME) -ldflags="-X main.version=$(VERSION)" $(MAIN_PKG)
@@ -18,4 +18,4 @@ clean:
 	rm -f $(BINARY_NAME)
 
 lint:
-    golangci-lint run ./...
+	golangci-lint run ./...
