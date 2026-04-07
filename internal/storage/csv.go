@@ -13,18 +13,18 @@ func InitCsv(filename string) error {
 
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("Error creating pomodoro.csv: %v\n", err)
+		return fmt.Errorf("error creating pomodoro.csv: %v", err)
 	}
 	defer file.Close()
 
 	writer := csv.NewWriter(file)
 	if err := writer.Write([]string{"topic", "start_time", "stop_time", "duration"}); err != nil {
-		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
+		return fmt.Errorf("error writing to pomodoro.csv: %v", err)
 	}
 
 	writer.Flush()
 	if err := writer.Error(); err != nil {
-		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
+		return fmt.Errorf("error writing to pomodoro.csv: %v", err)
 	}
 
 	fmt.Println("pomodoro.csv initialized/exists")
@@ -41,12 +41,12 @@ func InitCsv(filename string) error {
 
 // 	writer := csv.NewWriter(file)
 // 	if err := writer.Write(p.Strings()); err != nil {
-// 		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
+// 		return fmt.Errorf("error writing to pomodoro.csv: %v", err)
 // 	}
 
 // 	writer.Flush()
 // 	if err := writer.Error(); err != nil {
-// 		return fmt.Errorf("Error writing to pomodoro.csv: %v\n", err)
+// 		return fmt.Errorf("error writing to pomodoro.csv: %v", err)
 // 	}
 
 // 	fmt.Println("Pomodoro added to csv")

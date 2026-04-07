@@ -44,14 +44,14 @@ func NewTogglEntry(description string, start time.Time, stop time.Time, userID i
 func (entry *TogglEntry) Save(token string, workspaceID int) error {
 	entryJSON, err := json.Marshal(entry)
 	if err != nil {
-		return fmt.Errorf("Error marshalling entry: %v", err)
+		return fmt.Errorf("error marshalling entry: %v", err)
 	}
 
 	url := fmt.Sprintf("https://api.track.toggl.com/api/v9/workspaces/%d/time_entries", workspaceID)
 	reqBody := bytes.NewBuffer(entryJSON)
 	req, err := http.NewRequest(http.MethodPost, url, reqBody)
 	if err != nil {
-		return fmt.Errorf("Error creating request: %v", err)
+		return fmt.Errorf("error creating request: %v", err)
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.SetBasicAuth(token, "api_token")
@@ -59,7 +59,7 @@ func (entry *TogglEntry) Save(token string, workspaceID int) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("Error sending request: %v", err)
+		return fmt.Errorf("error sending request: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -71,7 +71,7 @@ func (entry *TogglEntry) Save(token string, workspaceID int) error {
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("Error reading response: %v", err)
+		return fmt.Errorf("error reading response: %v", err)
 	}
 
 	fmt.Printf("Response: %s\n", string(respBody))

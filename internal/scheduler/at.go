@@ -28,19 +28,19 @@ func (*AtScheduler) Schedule(task Task) error {
 	sleepAndNotify := fmt.Sprintf("sleep %d && %s", task.ExecuteAt.Second(), notifyCmd)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return fmt.Errorf("Error creating stdin pipe: %v\n", err)
+		return fmt.Errorf("error creating stdin pipe: %v", err)
 	}
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("Error starting at command: %v\n", err)
+		return fmt.Errorf("error starting at command: %v", err)
 	}
 	if _, err = stdin.Write([]byte(sleepAndNotify + "\n")); err != nil {
-		return fmt.Errorf("Error writing to stdin: %v\n", err)
+		return fmt.Errorf("error writing to stdin: %v", err)
 	}
 	if err := stdin.Close(); err != nil {
-		return fmt.Errorf("Error closing stdin: %v\n", err)
+		return fmt.Errorf("error closing stdin: %v", err)
 	}
 	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("Error: %v\nMake sure 'at' daemon (atd) is running.\n", err)
+		return fmt.Errorf("error running at command: %v (make sure 'at' daemon (atd) is running)", err)
 	}
 
 	var sb strings.Builder
