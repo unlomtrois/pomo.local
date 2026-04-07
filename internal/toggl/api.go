@@ -22,33 +22,33 @@ type TogglEntry struct { // not full
 	CreatedWith       string  `json:"created_with"`
 	Description       string  `json:"description"`
 	Duration          int     `json:"duration,omitempty"`
-	ProjectId         int     `json:"project_id,omitempty"`
-	SharedWithUserIds []int   `json:"shared_with_user_ids,omitempty"`
+	ProjectID         int     `json:"project_id,omitempty"`
+	SharedWithUserIDs []int   `json:"shared_with_user_ids,omitempty"`
 	Start             UTCTime `json:"start"`
 	Stop              UTCTime `json:"stop"`
-	UserId            int     `json:"user_id"`
-	WorkspaceId       int     `json:"workspace_id"`
+	UserID            int     `json:"user_id"`
+	WorkspaceID       int     `json:"workspace_id"`
 }
 
-func NewTogglEntry(description string, start time.Time, stop time.Time, userId int, workspaceId int) *TogglEntry {
+func NewTogglEntry(description string, start time.Time, stop time.Time, userID int, workspaceID int) *TogglEntry {
 	return &TogglEntry{
 		CreatedWith: "pomo.local (https://github.com/unlomtrois/pomo.local)",
 		Description: description,
 		Start:       UTCTime{start},
 		Stop:        UTCTime{stop},
-		UserId:      userId,
-		WorkspaceId: workspaceId,
+		UserID:      userID,
+		WorkspaceID: workspaceID,
 	}
 }
 
-func (entry *TogglEntry) Save(token string, workspaceId int) error {
-	entryJson, err := json.Marshal(entry)
+func (entry *TogglEntry) Save(token string, workspaceID int) error {
+	entryJSON, err := json.Marshal(entry)
 	if err != nil {
 		return fmt.Errorf("Error marshalling entry: %v", err)
 	}
 
-	url := fmt.Sprintf("https://api.track.toggl.com/api/v9/workspaces/%d/time_entries", workspaceId)
-	reqBody := bytes.NewBuffer(entryJson)
+	url := fmt.Sprintf("https://api.track.toggl.com/api/v9/workspaces/%d/time_entries", workspaceID)
+	reqBody := bytes.NewBuffer(entryJSON)
 	req, err := http.NewRequest(http.MethodPost, url, reqBody)
 	if err != nil {
 		return fmt.Errorf("Error creating request: %v", err)

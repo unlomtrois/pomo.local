@@ -7,7 +7,7 @@ import (
 )
 
 // it is filled by -ldflags="-X main.version=$(VERSION)"" in makefile
-var version string = "dev"
+var version = "dev"
 
 func main() {
 	commands.SetVersion(version)
