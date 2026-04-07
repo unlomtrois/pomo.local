@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 )
 
+// MailConfig holds SMTP settings for email notifications.
 type MailConfig struct {
 	Host     string `json:"host"`     // e.g. "smtp.gmail.com"
 	Port     int    `json:"port"`     // e.g., 587
@@ -16,6 +17,7 @@ type MailConfig struct {
 	Receiver string `json:"receiver"` // email for notifications
 }
 
+// Save writes the mail config to the XDG config directory.
 func (m *MailConfig) Save() error {
 	path, err := configDirFunc("pomo/mail.json")
 	if err != nil {
@@ -35,6 +37,7 @@ func (m *MailConfig) Save() error {
 	return os.WriteFile(path, data, 0600)
 }
 
+// Load reads the mail config from the XDG config directory.
 func (m *MailConfig) Load() error {
 	path, err := configDirFunc("pomo/mail.json")
 	if err != nil {
@@ -53,6 +56,7 @@ func (m *MailConfig) Load() error {
 	return nil
 }
 
+// Validate checks that the mail config has valid addresses and a reachable host.
 func (m *MailConfig) Validate() error {
 	if _, err := mail.ParseAddress(m.Sender); err != nil {
 		return fmt.Errorf("failed to parse host: %w", err)

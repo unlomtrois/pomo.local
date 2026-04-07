@@ -1,3 +1,4 @@
+// Package commands implements the pomo CLI subcommands.
 package commands
 
 import (

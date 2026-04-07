@@ -3,16 +3,8 @@ version: "2"
 linters:
   enable:
     - revive
-
-linters:
   settings:
-    revive:
-      rules:
-        - name: exported
-          arguments:
-            - checkPrivateReceivers
-            - disableStutterCheck
     errcheck:
       exclude-functions:
         - (*os.File).Close
-        - (*net/http.Response).Body.Close
+        - (io.ReadCloser).Close

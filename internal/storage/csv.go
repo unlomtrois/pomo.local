@@ -1,3 +1,4 @@
+// Package storage provides CSV-based session persistence.
 package storage
 
 import (
@@ -6,6 +7,7 @@ import (
 	"os"
 )
 
+// InitCsv creates the CSV file with a header row if it does not already exist.
 func InitCsv(filename string) error {
 	if _, err := os.Stat(filename); os.IsExist(err) {
 		return nil

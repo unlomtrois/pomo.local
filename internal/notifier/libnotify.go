@@ -1,3 +1,4 @@
+// Package notifier provides desktop notification implementations.
 package notifier
 
 import (
@@ -5,8 +6,10 @@ import (
 	"os/exec"
 )
 
+// LibnotifyNotifier sends desktop notifications via notify-send.
 type LibnotifyNotifier struct{}
 
+// Notify sends a desktop notification with the given summary, body, and hint.
 func (n *LibnotifyNotifier) Notify(summary, body, hint string) error {
 	notify := exec.Command("notify-send", summary, body, "--hint", hint)
 

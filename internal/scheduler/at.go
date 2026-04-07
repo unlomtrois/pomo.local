@@ -1,3 +1,4 @@
+// Package scheduler provides task scheduling via systemd or at.
 package scheduler
 
 import (
@@ -8,10 +9,12 @@ import (
 	"time"
 )
 
+// AtScheduler schedules notifications using the POSIX at command.
 type AtScheduler struct {
 	verbose bool
 }
 
+// Schedule queues the task using at for execution at the specified time.
 func (*AtScheduler) Schedule(task Task) error {
 	if time.Until(task.ExecuteAt) < 1*time.Minute {
 		fmt.Println("Warning: \"at\" does not support sub-minute precision")
@@ -53,6 +56,7 @@ func (*AtScheduler) Schedule(task Task) error {
 	return nil
 }
 
+// Cancel cancels a previously scheduled at job by task ID.
 func (*AtScheduler) Cancel(_ string) error {
 	panic("todo")
 }

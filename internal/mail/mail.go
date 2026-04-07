@@ -1,3 +1,4 @@
+// Package mail provides SMTP email notification support.
 package mail
 
 import (
@@ -10,6 +11,7 @@ import (
 	"pomo.local/internal/config"
 )
 
+// SendMail sends an email notification using the stored SMTP config and keyring credentials.
 func SendMail(subject, body string) error {
 	cfg := &config.MailConfig{}
 	if err := cfg.Load(); err != nil {
