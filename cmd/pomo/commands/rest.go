@@ -1,0 +1,28 @@
+package commands
+
+import (
+	"time"
+
+	"github.com/spf13/cobra"
+	"pomo.local/internal/utils"
+)
+
+var restCmd = &cobra.Command{
+	Use:   "rest",
+	Short: "Start a rest/break timer",
+	RunE:  runRest,
+}
+
+func init() {
+	rootCmd.AddCommand(restCmd)
+
+	restCmd.Flags().DurationP("duration", "d", 5*time.Minute, "Timer duration")
+	restCmd.Flags().Bool("email", false, "Send email when the session is over")
+}
+
+func runRest(cmd *cobra.Command, args []string) error {
+	duration, _ := cmd.Flags().GetDuration("duration")
+	useEmail, _ := cmd.Flags().GetBool("email")
+
+	return executeStart("Rest", "Break is over, get back to work!", duration, utils.HintDefault, useEmail, false)
+}

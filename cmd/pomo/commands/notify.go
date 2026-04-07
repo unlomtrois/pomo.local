@@ -1,37 +1,39 @@
-package cli
+package commands
 
 import (
-	"flag"
 	"log/slog"
 	"os"
 
 	"github.com/adrg/xdg"
+	"github.com/spf13/cobra"
 	"pomo.local/internal/mail"
 	"pomo.local/internal/notifier"
 	"pomo.local/internal/utils"
 )
 
-type NotifyCommand struct {
-	summary  string
-	body     string
-	hint     string
-	useEmail bool
+var notifyCmd = &cobra.Command{
+	Use:   "notify",
+	Short: "Send an immediate notification",
+	RunE:  runNotify,
 }
 
-func ParseNotify(args []string) *NotifyCommand {
-	cmd := NotifyCommand{}
-	fs := flag.NewFlagSet("notify", flag.ExitOnError)
-	fs.StringVar(&cmd.summary, "summary", "Pomodoro session is ended", "Title")
-	fs.StringVar(&cmd.body, "body", "", "Notification message")
-	fs.StringVar(&cmd.hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
-	fs.BoolVar(&cmd.useEmail, "email", false, "Send also email")
-	fs.Parse(args)
-	return &cmd
+func init() {
+	rootCmd.AddCommand(notifyCmd)
+
+	notifyCmd.Flags().String("summary", "Pomodoro session is ended", "Notification title")
+	notifyCmd.Flags().String("body", "", "Notification message")
+	notifyCmd.Flags().String("hint", utils.HintDefault, "Hint the same as notify-send hint")
+	notifyCmd.Flags().Bool("email", false, "Send also email")
 }
 
-func (cmd *NotifyCommand) Run() error {
-	notifier := &notifier.LibnotifyNotifier{}
-	if err := notifier.Notify(cmd.summary, cmd.body, cmd.hint); err != nil {
+func runNotify(cmd *cobra.Command, args []string) error {
+	summary, _ := cmd.Flags().GetString("summary")
+	body, _ := cmd.Flags().GetString("body")
+	hint, _ := cmd.Flags().GetString("hint")
+	useEmail, _ := cmd.Flags().GetBool("email")
+
+	n := &notifier.LibnotifyNotifier{}
+	if err := n.Notify(summary, body, hint); err != nil {
 		return err
 	}
 
@@ -45,9 +47,9 @@ func (cmd *NotifyCommand) Run() error {
 		return err
 	}
 
-	if cmd.useEmail {
+	if useEmail {
 		slog.Debug("Sending mail")
-		if err := mail.SendMail(cmd.summary, cmd.body); err != nil {
+		if err := mail.SendMail(summary, body); err != nil {
 			return err
 		}
 	}

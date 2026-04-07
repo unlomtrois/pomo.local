@@ -1,38 +1,38 @@
-package cli
+package commands
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
 	"github.com/adrg/xdg"
+	"github.com/spf13/cobra"
 	"pomo.local/internal/pomo"
 )
 
-type ActiveCommand struct {
-	verbose bool
-	remove  bool
+var activeCmd = &cobra.Command{
+	Use:   "active",
+	Short: "Check or manage active pomodoro session",
+	RunE:  runActive,
 }
 
-func ParseActive(args []string) *ActiveCommand {
-	cmd := ActiveCommand{}
-	fs := flag.NewFlagSet("active", flag.ExitOnError)
-	fs.BoolVar(&cmd.verbose, "v", false, "Verbose output, e.g. opened files, making http requests")
-	fs.BoolVar(&cmd.verbose, "verbose", false, "Verbose output, e.g. opened files, making http requests")
-	fs.BoolVar(&cmd.remove, "remove", false, "Remove active session? e.g. if it is outdated and was not removed automatically")
-	fs.Parse(args)
+func init() {
+	rootCmd.AddCommand(activeCmd)
 
-	if cmd.verbose {
+	activeCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
+	activeCmd.Flags().Bool("remove", false, "Remove outdated active session")
+}
+
+func runActive(cmd *cobra.Command, args []string) error {
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	if verbose {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 
-	return &cmd
-}
+	remove, _ := cmd.Flags().GetBool("remove")
 
-func (cmd *ActiveCommand) Run() error {
 	activeSessionPath, err := xdg.StateFile("pomo/active_session.json")
 	if err != nil {
 		return nil
@@ -56,7 +56,7 @@ func (cmd *ActiveCommand) Run() error {
 
 	if time.Now().Compare(session.StopTime) > 0 {
 		slog.Warn("active session is outdated")
-		if cmd.remove {
+		if remove {
 			slog.Info("Removing active_session file:", "path", activeSessionPath)
 			if err := os.Remove(activeSessionPath); err != nil {
 				return err

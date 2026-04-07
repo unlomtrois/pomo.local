@@ -1,9 +1,8 @@
-package cli
+package commands
 
 import (
 	"bufio"
 	"crypto/tls"
-	"flag"
 	"fmt"
 	"net"
 	"net/smtp"
@@ -12,40 +11,41 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 	"golang.org/x/term"
 	"pomo.local/internal/config"
 )
 
-// AuthCommand is basically a wrapper around notify-send
-type AuthCommand struct {
-	forEmail bool
-	forToggl bool
+var authCmd = &cobra.Command{
+	Use:   "auth",
+	Short: "Setup credentials for integrations",
+	RunE:  runAuth,
 }
 
-func ParseAuth(args []string) *AuthCommand {
-	cmd := AuthCommand{}
-	fs := flag.NewFlagSet("auth", flag.ExitOnError)
-	fs.BoolVar(&cmd.forEmail, "email", false, "Auth for SMTP notifications")
-	fs.BoolVar(&cmd.forToggl, "toggl", false, "Auth for Toggl Track")
-	fs.Parse(args)
+func init() {
+	rootCmd.AddCommand(authCmd)
 
-	return &cmd
+	authCmd.Flags().Bool("email", false, "Auth for SMTP notifications")
+	authCmd.Flags().Bool("toggl", false, "Auth for Toggl Track")
 }
 
-func (cmd *AuthCommand) Run() error {
+func runAuth(cmd *cobra.Command, args []string) error {
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
 		return fmt.Errorf("your terminal in non-interactive")
 	}
 
-	if cmd.forEmail {
-		if err := cmd.authService("pomo-smtp", "SMTP App Password"); err != nil {
+	forEmail, _ := cmd.Flags().GetBool("email")
+	forToggl, _ := cmd.Flags().GetBool("toggl")
+
+	if forEmail {
+		if err := authService("pomo-smtp", "SMTP App Password"); err != nil {
 			return err
 		}
 	}
-	if cmd.forToggl {
-		if err := cmd.authService("pomo-toggl", "Toggl API Token"); err != nil {
+	if forToggl {
+		if err := authService("pomo-toggl", "Toggl API Token"); err != nil {
 			return err
 		}
 	}
@@ -53,7 +53,7 @@ func (cmd *AuthCommand) Run() error {
 	return nil
 }
 
-func (cmd *AuthCommand) authService(service, label string) error {
+func authService(service, label string) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Printf("Enter Username/Email for %s: ", service)
@@ -91,22 +91,22 @@ func (cmd *AuthCommand) authService(service, label string) error {
 			return fmt.Errorf("failed to parse port: %v", err)
 		}
 
-		config := config.MailConfig{
+		cfg := config.MailConfig{
 			Host:     host,
 			Port:     int(port),
 			Sender:   user,
 			Receiver: user,
 		}
 
-		if err := config.Save(); err != nil {
+		if err := cfg.Save(); err != nil {
 			return fmt.Errorf("failed to save config, due: %v", err)
 		}
 		fmt.Println("New config successfully saved!")
 
 		fmt.Println("Testing SMTP connection...")
-		auth := smtp.PlainAuth("", config.Sender, pass, config.Host)
+		auth := smtp.PlainAuth("", cfg.Sender, pass, cfg.Host)
 
-		addr := net.JoinHostPort(config.Host, strconv.Itoa(config.Port))
+		addr := net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))
 		client, err := smtp.Dial(addr)
 		if err != nil {
 			return fmt.Errorf("could not connect to SMTP: %v", err)
