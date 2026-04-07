@@ -35,7 +35,7 @@ func (sd *SystemdScheduler) Schedule(task Task) error {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Failed to schedule notification: %v: %s", err, out)
+		return fmt.Errorf("failed to schedule notification: %v: %s", err, out)
 	}
 	slog.Debug("systemd-run's output:", "out", out)
 

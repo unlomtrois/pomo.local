@@ -11,11 +11,11 @@ func (n *LibnotifyNotifier) Notify(summary, body, hint string) error {
 	notify := exec.Command("notify-send", summary, body, "--hint", hint)
 
 	if notify.Err != nil {
-		return fmt.Errorf("Error finding notify-send: %v\n", notify.Err)
+		return fmt.Errorf("error finding notify-send: %v", notify.Err)
 	}
 
 	if err := notify.Run(); err != nil {
-		return fmt.Errorf("Error running notify: %v\n", err)
+		return fmt.Errorf("error running notify: %v", err)
 	}
 
 	return nil

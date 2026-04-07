@@ -117,7 +117,7 @@ func authService(service, label string) error {
 		}
 
 		if err = client.Auth(auth); err != nil {
-			return fmt.Errorf("Auth failed: invalid credentials or App Password required")
+			return fmt.Errorf("auth failed: invalid credentials or App Password required")
 		}
 		fmt.Println("Success! SMTP credentials verified successfully!")
 	}

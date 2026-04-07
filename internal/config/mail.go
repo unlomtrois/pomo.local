@@ -43,7 +43,7 @@ func (m *MailConfig) Load() error {
 
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return fmt.Errorf("No mail config found. You need to auth to fill it, call \"pomo auth --mail\"")
+		return fmt.Errorf("no mail config found, you need to auth to fill it, call \"pomo auth --mail\"")
 	}
 
 	if err := json.Unmarshal(data, &m); err != nil {
