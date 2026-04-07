@@ -12,7 +12,7 @@ type AtScheduler struct {
 	verbose bool
 }
 
-func (_ *AtScheduler) Schedule(task Task) error {
+func (*AtScheduler) Schedule(task Task) error {
 	if time.Until(task.ExecuteAt) < 1*time.Minute {
 		fmt.Println("Warning: \"at\" does not support sub-minute precision")
 	}
@@ -53,6 +53,6 @@ func (_ *AtScheduler) Schedule(task Task) error {
 	return nil
 }
 
-func (_ *AtScheduler) Cancel(taskID string) error {
+func (*AtScheduler) Cancel(_ string) error {
 	panic("todo")
 }

@@ -50,6 +50,6 @@ func (sd *SystemdScheduler) Schedule(task Task) error {
 	return nil
 }
 
-func (sd *SystemdScheduler) Cancel(taskID string) error {
+func (sd *SystemdScheduler) Cancel(_ string) error {
 	panic("todo")
 }

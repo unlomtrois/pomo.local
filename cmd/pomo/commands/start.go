@@ -36,7 +36,7 @@ func init() {
 	startCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 }
 
-func runStart(cmd *cobra.Command, args []string) error {
+func runStart(cmd *cobra.Command, _ []string) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	if verbose {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
