@@ -1,10 +1,9 @@
-package cli
+package commands
 
 import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -13,59 +12,52 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
+	"github.com/spf13/cobra"
 	"pomo.local/internal/pomo"
 	"pomo.local/internal/scheduler"
 	"pomo.local/internal/utils"
 )
 
-// StartCommand is basically a wrapper around notify-send
-type StartCommand struct {
-	topic    string
-	message  string
-	duration time.Duration
-	hint     string
-	useToggl bool
-	useEmail bool
-	verbose  bool
+var startCmd = &cobra.Command{
+	Use:   "start",
+	Short: "Set a new pomodoro timer",
+	RunE:  runStart,
 }
 
-func ParseStart(args []string) *StartCommand {
-	cmd := StartCommand{}
-	fs := flag.NewFlagSet("start", flag.ExitOnError)
-	fs.StringVar(&cmd.topic, "t", "", "Topic of your pomodoro session")
-	fs.StringVar(&cmd.message, "m", "Pomodoro session is ended!", "Notification message")
-	fs.DurationVar(&cmd.duration, "d", 25*time.Minute, "Timer duration")
-	fs.StringVar(&cmd.hint, "hint", utils.HintDefault, "Hint the same as notify-send hint")
-	fs.BoolVar(&cmd.useToggl, "toggl", false, "Use toggl integration?")
-	fs.BoolVar(&cmd.useEmail, "email", false, "Send email when the session is over?")
-	fs.BoolVar(&cmd.verbose, "v", false, "Verbose output, e.g. opened files, making http requests")
-	fs.BoolVar(&cmd.verbose, "verbose", false, "Verbose output, e.g. opened files, making http requests")
-	fs.Parse(args)
+func init() {
+	rootCmd.AddCommand(startCmd)
 
-	if cmd.verbose {
+	startCmd.Flags().StringP("topic", "t", "", "Topic of your pomodoro session")
+	startCmd.Flags().StringP("message", "m", "Pomodoro session is ended!", "Notification message")
+	startCmd.Flags().DurationP("duration", "d", 25*time.Minute, "Timer duration")
+	startCmd.Flags().String("hint", utils.HintDefault, "Hint the same as notify-send hint")
+	startCmd.Flags().Bool("toggl", false, "Use toggl integration")
+	startCmd.Flags().Bool("email", false, "Send email when the session is over")
+	startCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
+}
+
+func runStart(cmd *cobra.Command, args []string) error {
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	if verbose {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 
-	return &cmd
+	topic, _ := cmd.Flags().GetString("topic")
+	message, _ := cmd.Flags().GetString("message")
+	duration, _ := cmd.Flags().GetDuration("duration")
+	hint, _ := cmd.Flags().GetString("hint")
+	useEmail, _ := cmd.Flags().GetBool("email")
+
+	return executeStart(topic, message, duration, hint, useEmail, verbose)
 }
 
-func checkPomodoroSession() error {
-	slog.Debug("Search for active_session:", "path", "pomo/active_session.json")
-	if _, err := xdg.SearchStateFile("pomo/active_session.json"); err != nil {
-		// file not found, great
-		slog.Debug("File %s not found: %w", "pomo/active_session.json", err)
-		return fs.ErrNotExist
-	}
-	return fs.ErrExist
-}
-
-func (cmd *StartCommand) Run() error {
+func executeStart(topic, message string, duration time.Duration, hint string, useEmail, verbose bool) error {
 	// check that there is no current session
 	if err := checkPomodoroSession(); errors.Is(err, fs.ErrExist) {
 		return fmt.Errorf("You can only have 1 active pomodoro session at once.")
 	}
 
-	session := pomo.NewSession(cmd.topic, cmd.duration)
+	session := pomo.NewSession(topic, duration)
 	slog.Debug("Prepared session:", "session", session)
 
 	bin, err := os.Executable()
@@ -73,25 +65,25 @@ func (cmd *StartCommand) Run() error {
 		return fmt.Errorf("could not find pomo executable: %v", err)
 	}
 
-	args := []string{
+	notifyArgs := []string{
 		"notify",
 		"--summary", "Pomodoro",
-		"--body", cmd.message,
-		"--hint", cmd.hint,
+		"--body", message,
+		"--hint", hint,
 	}
-	if cmd.useEmail {
-		args = append(args, "--email")
+	if useEmail {
+		notifyArgs = append(notifyArgs, "--email")
 	}
 
 	task := scheduler.Task{
 		ID:        strconv.FormatInt(time.Now().Unix(), 16),
 		ExecuteAt: session.StopTime,
 		Binary:    bin,
-		Args:      args,
+		Args:      notifyArgs,
 	}
 	slog.Debug("Prepared task:", "task", task)
 
-	s, err := scheduler.NewDefault(cmd.verbose)
+	s, err := scheduler.NewDefault(verbose)
 	if err != nil {
 		return err
 	}
@@ -113,6 +105,15 @@ func (cmd *StartCommand) Run() error {
 	}
 
 	return nil
+}
+
+func checkPomodoroSession() error {
+	slog.Debug("Search for active_session:", "path", "pomo/active_session.json")
+	if _, err := xdg.SearchStateFile("pomo/active_session.json"); err != nil {
+		slog.Debug("File %s not found: %w", "pomo/active_session.json", err)
+		return fs.ErrNotExist
+	}
+	return fs.ErrExist
 }
 
 func saveActiveTask(task scheduler.Task) error {
