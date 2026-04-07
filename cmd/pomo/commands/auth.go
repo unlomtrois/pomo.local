@@ -30,7 +30,7 @@ func init() {
 	authCmd.Flags().Bool("toggl", false, "Auth for Toggl Track")
 }
 
-func runAuth(cmd *cobra.Command, args []string) error {
+func runAuth(cmd *cobra.Command, _ []string) error {
 	fd := int(os.Stdin.Fd())
 	if !term.IsTerminal(fd) {
 		return fmt.Errorf("your terminal in non-interactive")
