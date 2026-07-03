@@ -16,6 +16,7 @@ import (
 	"pomo.local/internal/mail"
 	"pomo.local/internal/notifier"
 	"pomo.local/internal/store"
+	"pomo.local/internal/webui"
 )
 
 // Notifier is the desktop-notification dependency (satisfied by
@@ -58,6 +59,10 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/sessions/active", s.handleActive)
 	mux.HandleFunc("POST /api/sessions/active/stop", s.handleStop)
 	mux.HandleFunc("POST /api/sessions/active/end", s.handleEnd)
+
+	// Everything else serves the embedded SPA (dashboard + calendar). The API
+	// routes above are more specific, so they take precedence over "/".
+	mux.Handle("/", webui.Handler())
 	return mux
 }
 

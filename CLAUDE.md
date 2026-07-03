@@ -31,6 +31,11 @@ the web UI and MCP server) are thin clients that talk to it over HTTP.
    daemon is reachable, `ensureDaemon` (`ensure.go`) **auto-spawns** a detached
    `pomo daemon` (`Setsid`, output redirected to `$XDG_STATE_HOME/pomo/daemon.log`)
    and waits for `/healthz`.
+   The daemon also **serves the embedded Svelte UI** (`internal/webui`, `go:embed`)
+   on `/` with SPA fallback, so one binary is CLI + API + timer + dashboard/calendar,
+   same-origin. Build the UI into the binary with `make ui` (SvelteKit static build
+   → synced into `internal/webui/dist`, which is gitignored except a placeholder)
+   then `make build`.
 3. When a session's timer fires, the daemon marks it `done` and calls the
    notifier (and `mail.SendMail` if the session requested email). On startup
    `Server.Reconcile` re-arms a still-running session's timer, or completes one

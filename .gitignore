@@ -25,3 +25,7 @@
 /result
 
 *.csv
+
+# embedded UI build output (synced by `make ui`)
+/internal/webui/dist/*
+!/internal/webui/dist/.gitkeep
