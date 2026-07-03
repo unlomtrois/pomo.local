@@ -30,6 +30,10 @@
 	function heightPx(s: Session): number {
 		return Math.max(16, (s.duration / 1e9 / 3600) * HH);
 	}
+	// Short cards can't fit two lines — show the title only, drop the time.
+	function showTime(s: Session): boolean {
+		return heightPx(s) >= 34;
+	}
 	function fmtTime(s: Session): string {
 		return new Date(s.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 	}
@@ -146,7 +150,9 @@
 							ondragend={onDragEnd}
 						>
 							<span class="topic">{s.topic}</span>
-							<span class="tt">{fmtTime(s)}</span>
+							{#if showTime(s)}
+								<span class="tt">{fmtTime(s)}</span>
+							{/if}
 						</article>
 					{/each}
 				</section>
