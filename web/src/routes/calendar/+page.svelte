@@ -166,7 +166,6 @@
 		height: 100vh;
 		display: flex;
 		flex-direction: column;
-		font-family: system-ui, sans-serif;
 		color: #222;
 	}
 	header {
@@ -180,6 +179,7 @@
 	h1 {
 		font-size: 1.4rem;
 		margin: 0;
+		font-weight: 500;
 	}
 	.weeknav {
 		display: flex;
@@ -232,7 +232,6 @@
 		border-left: 1px solid #eee;
 	}
 	.dayhead .date {
-		font-weight: 600;
 		color: #333;
 	}
 	.dayhead.istoday {
@@ -304,7 +303,6 @@
 		opacity: 0.7;
 	}
 	.topic {
-		font-weight: 600;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;

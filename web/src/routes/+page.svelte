@@ -76,7 +76,6 @@
 		max-width: 48rem;
 		margin: 2rem auto;
 		padding: 0 1rem;
-		font-family: system-ui, sans-serif;
 	}
 	h1 {
 		font-size: 2rem;
