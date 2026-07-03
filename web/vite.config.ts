@@ -2,13 +2,17 @@ import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
+// Where the dev server proxies API calls. Defaults to the local daemon; set
+// POMO_PROXY_TARGET to point at a remote one, e.g. http://pomo.local:7420.
+const proxyTarget = process.env.POMO_PROXY_TARGET ?? 'http://127.0.0.1:7420';
+
 export default defineConfig({
 	// In dev, proxy the daemon's API so the browser sees it as same-origin
 	// (avoids CORS and mirrors the embedded-in-daemon production setup).
 	server: {
 		proxy: {
-			'/api': 'http://127.0.0.1:7420',
-			'/healthz': 'http://127.0.0.1:7420'
+			'/api': proxyTarget,
+			'/healthz': proxyTarget
 		}
 	},
 	plugins: [
