@@ -116,8 +116,8 @@
 			<path d={arc} class="progress" />
 		{/if}
 		<circle cx={handle.x} cy={handle.y} r="9" class="knob" />
-		<text x={CX} y={CY - 4} class="big">{minutes}</text>
-		<text x={CX} y={CY + 16} class="unit">min</text>
+		<text x={CX} y={CY - 8} class="big">{minutes}</text>
+		<text x={CX} y={CY + 18} class="unit">min</text>
 	</svg>
 
 	<div class="presets">
@@ -188,11 +188,13 @@
 	}
 	.big {
 		text-anchor: middle;
+		dominant-baseline: central;
 		font-size: 2.4rem;
 		fill: #222;
 	}
 	.unit {
 		text-anchor: middle;
+		dominant-baseline: central;
 		font-size: 0.8rem;
 		fill: #999;
 	}
