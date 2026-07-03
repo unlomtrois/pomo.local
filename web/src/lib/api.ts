@@ -21,6 +21,29 @@ export async function listSessions(limit = 20): Promise<Session[]> {
 	return res.json();
 }
 
+/** Start a new session. Throws with a friendly message if one is already active. */
+export async function startSession(opts: {
+	topic: string;
+	duration: string; // Go duration string, e.g. "25m"
+}): Promise<Session> {
+	const res = await fetch(`${BASE}/api/sessions`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ ...opts, source: 'web' })
+	});
+	if (res.status === 409) throw new Error('A session is already active');
+	if (!res.ok) throw new Error(`POST /api/sessions failed: ${res.status}`);
+	return res.json();
+}
+
+/** Cancel the active session; returns null if there was none. */
+export async function stopActive(): Promise<Session | null> {
+	const res = await fetch(`${BASE}/api/sessions/active/stop`, { method: 'POST' });
+	if (res.status === 404) return null;
+	if (!res.ok) throw new Error(`stop failed: ${res.status}`);
+	return res.json();
+}
+
 /** Move a session to a new start time (duration preserved). */
 export async function moveSession(id: number, start: Date): Promise<Session> {
 	const res = await fetch(`${BASE}/api/sessions/${id}`, {
