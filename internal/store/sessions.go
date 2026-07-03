@@ -25,11 +25,15 @@ var ErrNoActive = errors.New("no active pomodoro session")
 // ErrSessionNotFound is returned when a session with the given id does not exist.
 var ErrSessionNotFound = errors.New("session not found")
 
+// ErrAmbiguousHash is returned when a hash prefix matches more than one session.
+var ErrAmbiguousHash = errors.New("ambiguous session hash prefix")
+
 // Session is a stored pomodoro session. It is the daemon-era superset of
 // pomo.Session, adding identity, lifecycle status, provenance, and the
 // completion-notification payload.
 type Session struct {
 	ID        int64         `json:"id"`
+	Hash      string        `json:"hash"`
 	Topic     string        `json:"topic"`
 	ProjectID *int64        `json:"project_id,omitempty"`
 	StartTime time.Time     `json:"start_time"`
@@ -70,10 +74,11 @@ func (s *Store) StartSession(ctx context.Context, p StartParams) (*Session, erro
 	if p.ProjectID != nil {
 		projectID = *p.ProjectID
 	}
+	hash := newHash()
 	res, err := s.db.ExecContext(ctx,
-		`INSERT INTO sessions (topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		p.Topic, projectID, start.Format(time.RFC3339Nano), stop.Format(time.RFC3339Nano),
+		`INSERT INTO sessions (hash, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		hash, p.Topic, projectID, start.Format(time.RFC3339Nano), stop.Format(time.RFC3339Nano),
 		int64(p.Duration), StatusActive, p.Source, p.Message, p.Hint, boolToInt(p.Email), boolToInt(p.Open),
 	)
 	if err != nil {
@@ -89,7 +94,7 @@ func (s *Store) StartSession(ctx context.Context, p StartParams) (*Session, erro
 	}
 
 	return &Session{
-		ID: id, Topic: p.Topic, ProjectID: p.ProjectID, StartTime: start, StopTime: stop,
+		ID: id, Hash: hash, Topic: p.Topic, ProjectID: p.ProjectID, StartTime: start, StopTime: stop,
 		Duration: p.Duration, Status: StatusActive, Source: p.Source,
 		Message: p.Message, Hint: p.Hint, Email: p.Email, Open: p.Open,
 	}, nil
@@ -98,7 +103,7 @@ func (s *Store) StartSession(ctx context.Context, p StartParams) (*Session, erro
 // ActiveSession returns the currently active session, or ErrNoActive if none.
 func (s *Store) ActiveSession(ctx context.Context) (*Session, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
+		`SELECT id, hash, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
 		 FROM sessions WHERE status = ? LIMIT 1`, StatusActive)
 
 	sess, err := scanSession(row)
@@ -163,7 +168,7 @@ func (s *Store) EndActiveSession(ctx context.Context, topic *string) (*Session, 
 // GetSession returns a single session by id, or ErrSessionNotFound.
 func (s *Store) GetSession(ctx context.Context, id int64) (*Session, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
+		`SELECT id, hash, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
 		 FROM sessions WHERE id = ?`, id)
 	sess, err := scanSession(row)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -195,13 +200,42 @@ func (s *Store) MoveSession(ctx context.Context, id int64, newStart time.Time) (
 	return sess, nil
 }
 
+// SessionByHashPrefix resolves a session by a hash prefix, git-style: returns
+// ErrSessionNotFound if nothing matches, ErrAmbiguousHash if more than one does.
+func (s *Store) SessionByHashPrefix(ctx context.Context, prefix string) (*Session, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, hash, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
+		 FROM sessions WHERE hash LIKE ? || '%' LIMIT 2`, prefix)
+	if err != nil {
+		return nil, fmt.Errorf("lookup hash: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var found []*Session
+	for rows.Next() {
+		sess, err := scanSession(rows)
+		if err != nil {
+			return nil, err
+		}
+		found = append(found, sess)
+	}
+	switch len(found) {
+	case 0:
+		return nil, ErrSessionNotFound
+	case 1:
+		return found[0], nil
+	default:
+		return nil, ErrAmbiguousHash
+	}
+}
+
 // ListSessions returns the most recent sessions, newest first, capped at limit.
 func (s *Store) ListSessions(ctx context.Context, limit int) ([]*Session, error) {
 	if limit <= 0 {
 		limit = 50
 	}
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
+		`SELECT id, hash, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
 		 FROM sessions ORDER BY start_time DESC LIMIT ?`, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list sessions: %w", err)
@@ -234,7 +268,7 @@ func scanSession(sc rowScanner) (*Session, error) {
 		email     int64
 		open      int64
 	)
-	if err := sc.Scan(&sess.ID, &sess.Topic, &projectID, &start, &stop, &durNanos,
+	if err := sc.Scan(&sess.ID, &sess.Hash, &sess.Topic, &projectID, &start, &stop, &durNanos,
 		&sess.Status, &sess.Source, &sess.Message, &sess.Hint, &email, &open); err != nil {
 		return nil, err
 	}

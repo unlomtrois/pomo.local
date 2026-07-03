@@ -28,6 +28,7 @@ var (
 // Session mirrors the daemon's session JSON.
 type Session struct {
 	ID        int64     `json:"id"`
+	Hash      string    `json:"hash"`
 	Topic     string    `json:"topic"`
 	StartTime time.Time `json:"start_time"`
 	StopTime  time.Time `json:"stop_time"`
@@ -123,6 +124,41 @@ func (c *Client) EndActive(ctx context.Context, topic string) (*Session, error) 
 		return nil, err
 	}
 	return &sess, nil
+}
+
+// ErrAmbiguousHash is returned when a hash prefix matches multiple sessions.
+var ErrAmbiguousHash = errors.New("ambiguous session hash prefix")
+
+// ErrSessionNotFound is returned when a hash prefix matches no session.
+var ErrSessionNotFound = errors.New("session not found")
+
+// SessionByHash resolves a session by hash prefix (own status handling, since
+// 404/409 here mean not-found/ambiguous rather than no-active/active-exists).
+func (c *Client) SessionByHash(ctx context.Context, prefix string) (*Session, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base+"/api/sessions/by-hash/"+prefix, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var sess Session
+		if err := json.NewDecoder(resp.Body).Decode(&sess); err != nil {
+			return nil, err
+		}
+		return &sess, nil
+	case http.StatusNotFound:
+		return nil, ErrSessionNotFound
+	case http.StatusConflict:
+		return nil, ErrAmbiguousHash
+	default:
+		return nil, fmt.Errorf("lookup failed: %s: %s", resp.Status, readErr(resp.Body))
+	}
 }
 
 // ListSessions returns recent sessions, newest first.

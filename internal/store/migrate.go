@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS sessions (
 	source     TEXT NOT NULL DEFAULT 'cli',
 	-- completion-notification payload, carried so the daemon's timer can
 	-- reproduce the notify-send + optional email the old scheduler flow did.
+	-- stable, opaque per-entry id (like a git object name), assigned at creation.
+	hash       TEXT,
 	message    TEXT NOT NULL DEFAULT '',
 	hint       TEXT NOT NULL DEFAULT '',
 	email      INTEGER NOT NULL DEFAULT 0,
@@ -73,6 +75,46 @@ func (s *Store) migrate(ctx context.Context) error {
 	if _, err := s.db.ExecContext(ctx, `ALTER TABLE sessions ADD COLUMN open INTEGER NOT NULL DEFAULT 0`); err != nil {
 		if !strings.Contains(err.Error(), "duplicate column name") {
 			return fmt.Errorf("migrate open: %w", err)
+		}
+	}
+	// Add the per-entry hash to pre-existing sessions tables.
+	if _, err := s.db.ExecContext(ctx, `ALTER TABLE sessions ADD COLUMN hash TEXT`); err != nil {
+		if !strings.Contains(err.Error(), "duplicate column name") {
+			return fmt.Errorf("migrate hash: %w", err)
+		}
+	}
+	if err := s.backfillHashes(ctx); err != nil {
+		return err
+	}
+	if _, err := s.db.ExecContext(ctx,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_hash ON sessions(hash)`); err != nil {
+		return fmt.Errorf("migrate hash index: %w", err)
+	}
+	return nil
+}
+
+// backfillHashes assigns a hash to any pre-existing rows that lack one (must run
+// before the unique index is created).
+func (s *Store) backfillHashes(ctx context.Context) error {
+	rows, err := s.db.QueryContext(ctx, `SELECT id FROM sessions WHERE hash IS NULL OR hash = ''`)
+	if err != nil {
+		return fmt.Errorf("backfill scan: %w", err)
+	}
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			_ = rows.Close()
+			return err
+		}
+		ids = append(ids, id)
+	}
+	_ = rows.Close()
+
+	for _, id := range ids {
+		if _, err := s.db.ExecContext(ctx,
+			`UPDATE sessions SET hash = ? WHERE id = ?`, newHash(), id); err != nil {
+			return fmt.Errorf("backfill hash: %w", err)
 		}
 	}
 	return nil

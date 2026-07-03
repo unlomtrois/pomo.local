@@ -59,7 +59,12 @@ func runActive(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fmt.Printf("Active session topic: %s, ends at: %s\n",
-		sess.Topic, sess.StopTime.Local().Format("15:04:05"))
+	if sess.Open {
+		fmt.Printf("[%s] Active: %s (open, running since %s)\n",
+			short(sess.Hash), sess.Topic, sess.StartTime.Local().Format("15:04:05"))
+	} else {
+		fmt.Printf("[%s] Active: %s, ends at %s\n",
+			short(sess.Hash), sess.Topic, sess.StopTime.Local().Format("15:04:05"))
+	}
 	return nil
 }

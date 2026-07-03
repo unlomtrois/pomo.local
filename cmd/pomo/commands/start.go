@@ -51,9 +51,9 @@ func runStart(_ *cobra.Command, args []string) error {
 	}
 
 	if sess.Topic != "" {
-		fmt.Printf("Started %q at %s\n", sess.Topic, sess.StartTime.Local().Format("15:04:05"))
+		fmt.Printf("[%s] Started %q at %s\n", short(sess.Hash), sess.Topic, sess.StartTime.Local().Format("15:04:05"))
 	} else {
-		fmt.Printf("Started at %s — name it when you `pomo end`\n", sess.StartTime.Local().Format("15:04:05"))
+		fmt.Printf("[%s] Started at %s — name it when you `pomo end`\n", short(sess.Hash), sess.StartTime.Local().Format("15:04:05"))
 	}
 	return nil
 }

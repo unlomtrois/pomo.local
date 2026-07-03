@@ -57,6 +57,7 @@ Cobra-based; each file registers itself onto `rootCmd` in an `init()`. `main.go`
 - `doro` — start a fixed pomodoro via the daemon; auto-spawns it. `--email`, `--duration/-d`, `--topic/-t`, `--message/-m`, `--hint`, `--verbose/-v`.
 - `start [topic]` / `end [topic]` (alias `stop`) — open-ended **stopwatch**: `start` opens a session with no fixed stop and no timer (`sessions.open=1`); `end` records actual elapsed time, marks it done, and optionally sets/overrides the topic. Topic is a positional arg and optional on both sides (name at start, at end, or override). Enforced by the same single-active invariant as `doro`. `internal/store.EndActiveSession` computes elapsed = now − start; the daemon skips arming/reconciling timers for `open` sessions.
 - `rest` — thin wrapper calling `executeStart("Rest", ...)` with a 5m default.
+- `show <hash>` — look up a session by its hash or a short prefix (git-style); the daemon resolves via `store.SessionByHashPrefix` (404 not-found / 409 ambiguous). Every session gets a stable random 40-hex `hash` at creation (`sessions.hash`, unique index; the git *object-name* analog — random, not content-derived, since sessions mutate). CLI output shows the 7-char short form `[abc1234]`.
 - `active` — queries the daemon for the active session; `--remove` cancels it.
 - `notify` — manual immediate-notification utility (no longer part of the timer flow).
 - `auth` — stores SMTP/Toggl secrets in the OS keyring (`go-keyring`) and writes `mail.json`; for `--email` it live-tests the SMTP connection.

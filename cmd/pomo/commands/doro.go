@@ -79,7 +79,7 @@ func executeStart(topic, message string, duration time.Duration, hint string, us
 		return err
 	}
 
-	fmt.Printf("Started %q", sess.Topic)
+	fmt.Printf("[%s] Started %q", short(sess.Hash), sess.Topic)
 	if proj != nil {
 		fmt.Printf(" in project %q", proj.Name)
 	}

@@ -48,9 +48,9 @@ func runEnd(_ *cobra.Command, args []string) error {
 
 	elapsed := utils.ShortDuration(time.Duration(sess.Duration).Round(time.Second))
 	if sess.Topic != "" {
-		fmt.Printf("Ended %q after %s\n", sess.Topic, elapsed)
+		fmt.Printf("[%s] Ended %q after %s\n", short(sess.Hash), sess.Topic, elapsed)
 	} else {
-		fmt.Printf("Ended session after %s\n", elapsed)
+		fmt.Printf("[%s] Ended session after %s\n", short(sess.Hash), elapsed)
 	}
 	return nil
 }
