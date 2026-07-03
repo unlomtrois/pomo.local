@@ -4,7 +4,9 @@ import { defineConfig } from 'vite';
 
 // Where the dev server proxies API calls. Defaults to the local daemon; set
 // POMO_PROXY_TARGET to point at a remote one, e.g. http://pomo.local:7420.
-const proxyTarget = process.env.POMO_PROXY_TARGET ?? 'http://127.0.0.1:7420';
+// (globalThis access avoids needing @types/node just for process.env.)
+const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
+const proxyTarget = env?.POMO_PROXY_TARGET ?? 'http://127.0.0.1:7420';
 
 export default defineConfig({
 	// In dev, proxy the daemon's API so the browser sees it as same-origin

@@ -41,6 +41,59 @@
 	function sessionsForDay(day: Date): Session[] {
 		return sessions.filter((s) => isSameDay(new Date(s.start_time), day));
 	}
+
+	interface Placed {
+		s: Session;
+		left: number; // fraction 0..1
+		width: number; // fraction 0..1
+	}
+
+	// Lay out a day's sessions in side-by-side columns so overlapping ones don't
+	// stack. Events are grouped into clusters (transitively overlapping runs);
+	// within a cluster each event takes the first free column, and every event
+	// gets width 1/columns so the cluster fills the day's width.
+	function layoutDay(list: Session[]): Placed[] {
+		const evs = list
+			.map((s) => {
+				const start = new Date(s.start_time).getTime();
+				return { s, start, end: start + s.duration / 1e6 }; // ns → ms
+			})
+			.sort((a, b) => a.start - b.start || a.end - b.end);
+
+		const placed: Placed[] = [];
+		let cluster: typeof evs = [];
+		let colEnds: number[] = []; // last end time per column in the cluster
+		const colOf = new Map<number, number>();
+		let clusterEnd = -Infinity;
+
+		const flush = () => {
+			const ncols = colEnds.length || 1;
+			for (const e of cluster) {
+				const c = colOf.get(e.s.id) ?? 0;
+				placed.push({ s: e.s, left: c / ncols, width: 1 / ncols });
+			}
+			cluster = [];
+			colEnds = [];
+			colOf.clear();
+			clusterEnd = -Infinity;
+		};
+
+		for (const e of evs) {
+			if (cluster.length && e.start >= clusterEnd) flush();
+			let col = colEnds.findIndex((end) => end <= e.start);
+			if (col === -1) {
+				col = colEnds.length;
+				colEnds.push(e.end);
+			} else {
+				colEnds[col] = e.end;
+			}
+			colOf.set(e.s.id, col);
+			cluster.push(e);
+			clusterEnd = Math.max(clusterEnd, e.end);
+		}
+		flush();
+		return placed;
+	}
 	function topPx(s: Session): number {
 		const d = new Date(s.start_time);
 		return ((d.getHours() * 60 + d.getMinutes()) / 60) * HH;
@@ -189,21 +242,22 @@
 					}}
 					ondrop={(e) => onDrop(e, day)}
 				>
-					{#each sessionsForDay(day) as s (s.id)}
+					{#each layoutDay(sessionsForDay(day)) as p (p.s.id)}
 						<article
 							class="card"
-							class:dragging={draggingId === s.id}
-							class:active={s.status === 'active'}
-							class:cancelled={s.status === 'cancelled'}
-							style="top:{topPx(s)}px; height:{heightPx(s)}px"
+							class:dragging={draggingId === p.s.id}
+							class:active={p.s.status === 'active'}
+							class:cancelled={p.s.status === 'cancelled'}
+							style="top:{topPx(p.s)}px; height:{heightPx(p.s)}px;
+								left:calc({p.left * 100}% + 1px); width:calc({p.width * 100}% - 2px)"
 							draggable="true"
 							role="listitem"
-							ondragstart={(e) => onDragStart(e, s)}
+							ondragstart={(e) => onDragStart(e, p.s)}
 							ondragend={onDragEnd}
 						>
-							<span class="topic">{s.topic}</span>
-							{#if showTime(s)}
-								<span class="tt">{fmtTime(s)}</span>
+							<span class="topic">{p.s.topic}</span>
+							{#if showTime(p.s)}
+								<span class="tt">{fmtTime(p.s)}</span>
 							{/if}
 						</article>
 					{/each}
@@ -342,8 +396,6 @@
 
 	.card {
 		position: absolute;
-		left: 2px;
-		right: 2px;
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
