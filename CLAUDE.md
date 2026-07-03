@@ -27,7 +27,7 @@ the web UI and MCP server) are thin clients that talk to it over HTTP.
    in-process timer engine (`time.AfterFunc` per active session) that fires the
    completion notification/email itself. Intended to run under a systemd `--user`
    unit. Graceful shutdown on SIGINT/SIGTERM.
-2. `pomo start` (`start.go`) POSTs to the daemon via `internal/client`. If no
+2. `pomo doro` (`doro.go`) POSTs to the daemon via `internal/client`. If no
    daemon is reachable, `ensureDaemon` (`ensure.go`) **auto-spawns** a detached
    `pomo daemon` (`Setsid`, output redirected to `$XDG_STATE_HOME/pomo/daemon.log`)
    and waits for `/healthz`.
@@ -52,9 +52,9 @@ index** (`sessions.status WHERE status='active'`) rather than a state-file check
 
 Cobra-based; each file registers itself onto `rootCmd` in an `init()`. `main.go` calls `SetVersion` then `Execute`.
 
-- `init` — marks the current directory as a project ("git for time tracking"): creates a `.pomo/` with `config.json` (`{id, name}`) and a self-ignoring `.gitignore` (`*`) so it stays invisible to git. `internal/project` discovers the nearest `.pomo` by walking up from the cwd (like git finds `.git`); `start`/`rest` tag the session with that project's id/name. The daemon upserts a `projects` row (keyed by the `.pomo` `ext_id`) and sets `sessions.project_id`. The daemon/DB remain the source of truth — `.pomo` only supplies project identity.
+- `init` — marks the current directory as a project ("git for time tracking"): creates a `.pomo/` with `config.json` (`{id, name}`) and a self-ignoring `.gitignore` (`*`) so it stays invisible to git. `internal/project` discovers the nearest `.pomo` by walking up from the cwd (like git finds `.git`); `doro`/`rest` tag the session with that project's id/name. The daemon upserts a `projects` row (keyed by the `.pomo` `ext_id`) and sets `sessions.project_id`. The daemon/DB remain the source of truth — `.pomo` only supplies project identity.
 - `daemon` — the long-lived server. `--addr/-a` (default `client.DefaultAddr`, `127.0.0.1:7420`), `--verbose/-v`. `--mdns` advertises `<host>.local` (`--host`, default `pomo`) and binds all interfaces so it's reachable at e.g. `http://pomo.local:7420`. mDNS registers through the system avahi-daemon over D-Bus (`internal/mdns`, with the `NO_REVERSE` publish flag so the alias doesn't collide with the machine's own reverse PTR); falls back to an embedded pure-Go responder (`hashicorp/mdns`) only when avahi is absent.
-- `start` — daemon client; auto-spawns the daemon. `--email`, `--duration/-d`, `--topic/-t`, `--message/-m`, `--hint`, `--verbose/-v`.
+- `doro` — start a fixed pomodoro via the daemon; auto-spawns it. `--email`, `--duration/-d`, `--topic/-t`, `--message/-m`, `--hint`, `--verbose/-v`. (`start` is reserved for a future open-ended stopwatch.)
 - `rest` — thin wrapper calling `executeStart("Rest", ...)` with a 5m default.
 - `active` — queries the daemon for the active session; `--remove` cancels it.
 - `notify` — manual immediate-notification utility (no longer part of the timer flow).

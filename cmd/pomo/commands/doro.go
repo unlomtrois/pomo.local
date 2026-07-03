@@ -14,24 +14,24 @@ import (
 	"pomo.local/internal/utils"
 )
 
-var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Set a new pomodoro timer",
-	RunE:  runStart,
+var doroCmd = &cobra.Command{
+	Use:   "doro",
+	Short: "Start a pomodoro session (fixed timer)",
+	RunE:  runDoro,
 }
 
 func init() {
-	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(doroCmd)
 
-	startCmd.Flags().StringP("topic", "t", "", "Topic of your pomodoro session")
-	startCmd.Flags().StringP("message", "m", "Pomodoro session is ended!", "Notification message")
-	startCmd.Flags().DurationP("duration", "d", 25*time.Minute, "Timer duration")
-	startCmd.Flags().String("hint", utils.HintDefault, "Hint the same as notify-send hint")
-	startCmd.Flags().Bool("email", false, "Send email when the session is over")
-	startCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
+	doroCmd.Flags().StringP("topic", "t", "", "Topic of your pomodoro session")
+	doroCmd.Flags().StringP("message", "m", "Pomodoro session is ended!", "Notification message")
+	doroCmd.Flags().DurationP("duration", "d", 25*time.Minute, "Timer duration")
+	doroCmd.Flags().String("hint", utils.HintDefault, "Hint the same as notify-send hint")
+	doroCmd.Flags().Bool("email", false, "Send email when the session is over")
+	doroCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 }
 
-func runStart(cmd *cobra.Command, _ []string) error {
+func runDoro(cmd *cobra.Command, _ []string) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	if verbose {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
