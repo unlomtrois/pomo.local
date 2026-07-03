@@ -41,12 +41,14 @@ type Session struct {
 
 // StartParams is the payload for StartSession. Duration is a Go duration string.
 type StartParams struct {
-	Topic    string `json:"topic"`
-	Duration string `json:"duration"`
-	Source   string `json:"source"`
-	Message  string `json:"message"`
-	Hint     string `json:"hint"`
-	Email    bool   `json:"email"`
+	Topic       string `json:"topic"`
+	Duration    string `json:"duration"`
+	Source      string `json:"source"`
+	Message     string `json:"message"`
+	Hint        string `json:"hint"`
+	Email       bool   `json:"email"`
+	Project     string `json:"project,omitempty"`      // .pomo stable id
+	ProjectName string `json:"project_name,omitempty"` // .pomo display name
 }
 
 // Client talks to a pomo daemon over HTTP.

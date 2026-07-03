@@ -52,6 +52,7 @@ index** (`sessions.status WHERE status='active'`) rather than a state-file check
 
 Cobra-based; each file registers itself onto `rootCmd` in an `init()`. `main.go` calls `SetVersion` then `Execute`.
 
+- `init` — marks the current directory as a project ("git for time tracking"): creates a `.pomo/` with `config.json` (`{id, name}`) and a self-ignoring `.gitignore` (`*`) so it stays invisible to git. `internal/project` discovers the nearest `.pomo` by walking up from the cwd (like git finds `.git`); `start`/`rest` tag the session with that project's id/name. The daemon upserts a `projects` row (keyed by the `.pomo` `ext_id`) and sets `sessions.project_id`. The daemon/DB remain the source of truth — `.pomo` only supplies project identity.
 - `daemon` — the long-lived server. `--addr/-a` (default `client.DefaultAddr`, `127.0.0.1:7420`), `--verbose/-v`. `--mdns` advertises `<host>.local` (`--host`, default `pomo`) and binds all interfaces so it's reachable at e.g. `http://pomo.local:7420`. mDNS registers through the system avahi-daemon over D-Bus (`internal/mdns`, with the `NO_REVERSE` publish flag so the alias doesn't collide with the machine's own reverse PTR); falls back to an embedded pure-Go responder (`hashicorp/mdns`) only when avahi is absent.
 - `start` — daemon client; auto-spawns the daemon. `--email`, `--duration/-d`, `--topic/-t`, `--message/-m`, `--hint`, `--verbose/-v`.
 - `rest` — thin wrapper calling `executeStart("Rest", ...)` with a 5m default.

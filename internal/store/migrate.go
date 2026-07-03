@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 // schema is applied idempotently on every Open. Keep statements additive and
@@ -15,9 +16,12 @@ import (
 //   - project_id: optional FK, the seed of the Toggl-style project grouping.
 const schema = `
 CREATE TABLE IF NOT EXISTS projects (
-	id    INTEGER PRIMARY KEY AUTOINCREMENT,
-	name  TEXT NOT NULL UNIQUE,
-	color TEXT NOT NULL DEFAULT ''
+	id     INTEGER PRIMARY KEY AUTOINCREMENT,
+	name   TEXT NOT NULL,
+	color  TEXT NOT NULL DEFAULT '',
+	-- ext_id is the stable id from a project's .pomo/config.json; NULL for
+	-- projects not backed by a .pomo marker.
+	ext_id TEXT
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -49,6 +53,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_single_active
 func (s *Store) migrate(ctx context.Context) error {
 	if _, err := s.db.ExecContext(ctx, schema); err != nil {
 		return fmt.Errorf("migrate: %w", err)
+	}
+	// Bring a pre-existing projects table (created before ext_id) up to date.
+	// SQLite has no ADD COLUMN IF NOT EXISTS, so ignore the duplicate-column error.
+	if _, err := s.db.ExecContext(ctx, `ALTER TABLE projects ADD COLUMN ext_id TEXT`); err != nil {
+		if !strings.Contains(err.Error(), "duplicate column name") {
+			return fmt.Errorf("migrate ext_id: %w", err)
+		}
+	}
+	// Unique index enables ON CONFLICT(ext_id) upserts (multiple NULLs allowed).
+	if _, err := s.db.ExecContext(ctx,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_ext ON projects(ext_id)`); err != nil {
+		return fmt.Errorf("migrate ext_id index: %w", err)
 	}
 	return nil
 }

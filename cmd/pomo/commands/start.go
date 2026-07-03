@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/spf13/cobra"
 	"pomo.local/internal/client"
+	"pomo.local/internal/project"
 	"pomo.local/internal/utils"
 )
 
@@ -54,14 +56,22 @@ func executeStart(topic, message string, duration time.Duration, hint string, us
 		return err
 	}
 
-	sess, err := c.StartSession(ctx, client.StartParams{
+	params := client.StartParams{
 		Topic:    topic,
 		Duration: duration.String(),
 		Source:   "cli",
 		Message:  message,
 		Hint:     hint,
 		Email:    useEmail,
-	})
+	}
+	// Tag the session with the nearest .pomo project, if we're inside one.
+	proj := discoverProject()
+	if proj != nil {
+		params.Project = proj.ID
+		params.ProjectName = proj.Name
+	}
+
+	sess, err := c.StartSession(ctx, params)
 	if errors.Is(err, client.ErrActiveExists) {
 		return fmt.Errorf("you can only have 1 active pomodoro session at once")
 	}
@@ -69,11 +79,28 @@ func executeStart(topic, message string, duration time.Duration, hint string, us
 		return err
 	}
 
-	fmt.Printf("Started %q — you'll be notified at %s",
-		sess.Topic, sess.StopTime.Local().Format("15:04:05"))
+	fmt.Printf("Started %q", sess.Topic)
+	if proj != nil {
+		fmt.Printf(" in project %q", proj.Name)
+	}
+	fmt.Printf(" — you'll be notified at %s", sess.StopTime.Local().Format("15:04:05"))
 	if useEmail {
 		fmt.Print(", and via email")
 	}
 	fmt.Println()
 	return nil
+}
+
+// discoverProject finds the nearest .pomo project from the working directory,
+// or returns nil if we're not inside one.
+func discoverProject() *project.Project {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil
+	}
+	p, err := project.Find(cwd)
+	if err != nil {
+		return nil
+	}
+	return p
 }

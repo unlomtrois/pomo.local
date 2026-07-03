@@ -44,12 +44,13 @@ type Session struct {
 
 // StartParams describes a session to start.
 type StartParams struct {
-	Topic    string
-	Duration time.Duration
-	Source   string
-	Message  string
-	Hint     string
-	Email    bool
+	Topic     string
+	Duration  time.Duration
+	Source    string
+	Message   string
+	Hint      string
+	Email     bool
+	ProjectID *int64 // internal projects.id, or nil for no project
 }
 
 // StartSession inserts a new active session. It fails with ErrActiveExists if
@@ -58,10 +59,14 @@ func (s *Store) StartSession(ctx context.Context, p StartParams) (*Session, erro
 	start := time.Now().UTC()
 	stop := start.Add(p.Duration)
 
+	var projectID any
+	if p.ProjectID != nil {
+		projectID = *p.ProjectID
+	}
 	res, err := s.db.ExecContext(ctx,
-		`INSERT INTO sessions (topic, start_time, stop_time, duration, status, source, message, hint, email)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		p.Topic, start.Format(time.RFC3339Nano), stop.Format(time.RFC3339Nano),
+		`INSERT INTO sessions (topic, project_id, start_time, stop_time, duration, status, source, message, hint, email)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		p.Topic, projectID, start.Format(time.RFC3339Nano), stop.Format(time.RFC3339Nano),
 		int64(p.Duration), StatusActive, p.Source, p.Message, p.Hint, boolToInt(p.Email),
 	)
 	if err != nil {
@@ -77,7 +82,7 @@ func (s *Store) StartSession(ctx context.Context, p StartParams) (*Session, erro
 	}
 
 	return &Session{
-		ID: id, Topic: p.Topic, StartTime: start, StopTime: stop,
+		ID: id, Topic: p.Topic, ProjectID: p.ProjectID, StartTime: start, StopTime: stop,
 		Duration: p.Duration, Status: StatusActive, Source: p.Source,
 		Message: p.Message, Hint: p.Hint, Email: p.Email,
 	}, nil

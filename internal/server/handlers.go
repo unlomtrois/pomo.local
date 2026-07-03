@@ -12,12 +12,14 @@ import (
 // startRequest is the POST /api/sessions body. Duration is a Go duration string
 // (e.g. "25m", "1h") so the wire format matches the CLI's -d flag.
 type startRequest struct {
-	Topic    string `json:"topic"`
-	Duration string `json:"duration"`
-	Source   string `json:"source"`
-	Message  string `json:"message"`
-	Hint     string `json:"hint"`
-	Email    bool   `json:"email"`
+	Topic       string `json:"topic"`
+	Duration    string `json:"duration"`
+	Source      string `json:"source"`
+	Message     string `json:"message"`
+	Hint        string `json:"hint"`
+	Email       bool   `json:"email"`
+	Project     string `json:"project"`      // stable ext id from .pomo/config.json
+	ProjectName string `json:"project_name"` // display name from .pomo
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -45,13 +47,24 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 		source = "cli"
 	}
 
+	var projectID *int64
+	if req.Project != "" {
+		id, err := s.store.UpsertProject(r.Context(), req.Project, req.ProjectName)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		projectID = &id
+	}
+
 	sess, err := s.store.StartSession(r.Context(), store.StartParams{
-		Topic:    req.Topic,
-		Duration: duration,
-		Source:   source,
-		Message:  req.Message,
-		Hint:     req.Hint,
-		Email:    req.Email,
+		Topic:     req.Topic,
+		Duration:  duration,
+		Source:    source,
+		Message:   req.Message,
+		Hint:      req.Hint,
+		Email:     req.Email,
+		ProjectID: projectID,
 	})
 	if errors.Is(err, store.ErrActiveExists) {
 		writeError(w, http.StatusConflict, "you can only have 1 active pomodoro session at once")
