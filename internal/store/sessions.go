@@ -22,6 +22,9 @@ var ErrActiveExists = errors.New("an active pomodoro session already exists")
 // ErrNoActive is returned when an operation needs an active session and none exists.
 var ErrNoActive = errors.New("no active pomodoro session")
 
+// ErrSessionNotFound is returned when a session with the given id does not exist.
+var ErrSessionNotFound = errors.New("session not found")
+
 // Session is a stored pomodoro session. It is the daemon-era superset of
 // pomo.Session, adding identity, lifecycle status, provenance, and the
 // completion-notification payload.
@@ -109,6 +112,41 @@ func (s *Store) FinishActiveSession(ctx context.Context, status string) error {
 		return ErrNoActive
 	}
 	return nil
+}
+
+// GetSession returns a single session by id, or ErrSessionNotFound.
+func (s *Store) GetSession(ctx context.Context, id int64) (*Session, error) {
+	row := s.db.QueryRowContext(ctx,
+		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email
+		 FROM sessions WHERE id = ?`, id)
+	sess, err := scanSession(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrSessionNotFound
+	}
+	return sess, err
+}
+
+// MoveSession changes a session's start time to newStart, preserving its
+// duration (stop_time is recomputed). Used by the calendar drag-and-drop.
+// Returns the updated session, or ErrSessionNotFound.
+func (s *Store) MoveSession(ctx context.Context, id int64, newStart time.Time) (*Session, error) {
+	sess, err := s.GetSession(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	start := newStart.UTC()
+	stop := start.Add(sess.Duration)
+	if _, err := s.db.ExecContext(ctx,
+		`UPDATE sessions SET start_time = ?, stop_time = ? WHERE id = ?`,
+		start.Format(time.RFC3339Nano), stop.Format(time.RFC3339Nano), id,
+	); err != nil {
+		return nil, fmt.Errorf("move session: %w", err)
+	}
+
+	sess.StartTime = start
+	sess.StopTime = stop
+	return sess, nil
 }
 
 // ListSessions returns the most recent sessions, newest first, capped at limit.

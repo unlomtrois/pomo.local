@@ -29,6 +29,7 @@
 
 <main>
 	<h1>🍅 pomo</h1>
+	<nav><a href="/calendar">Calendar →</a></nav>
 
 	{#if loading}
 		<p>Loading…</p>

@@ -21,6 +21,17 @@ export async function listSessions(limit = 20): Promise<Session[]> {
 	return res.json();
 }
 
+/** Move a session to a new start time (duration preserved). */
+export async function moveSession(id: number, start: Date): Promise<Session> {
+	const res = await fetch(`${BASE}/api/sessions/${id}`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ start_time: start.toISOString() })
+	});
+	if (!res.ok) throw new Error(`PATCH /api/sessions/${id} failed: ${res.status}`);
+	return res.json();
+}
+
 export async function activeSession(): Promise<Session | null> {
 	const res = await fetch(`${BASE}/api/sessions/active`);
 	if (res.status === 404) return null;

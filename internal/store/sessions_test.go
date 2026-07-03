@@ -63,6 +63,44 @@ func TestSessionLifecycle(t *testing.T) {
 	}
 }
 
+func TestMoveSession(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+
+	started, err := st.StartSession(ctx, StartParams{Topic: "move me", Duration: 25 * time.Minute, Source: "cli"})
+	if err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	newStart := started.StartTime.Add(48 * time.Hour)
+	moved, err := st.MoveSession(ctx, started.ID, newStart)
+	if err != nil {
+		t.Fatalf("move: %v", err)
+	}
+	if !moved.StartTime.Equal(newStart.UTC()) {
+		t.Fatalf("start not updated: got %v want %v", moved.StartTime, newStart.UTC())
+	}
+	if moved.Duration != started.Duration {
+		t.Fatalf("duration changed: got %v want %v", moved.Duration, started.Duration)
+	}
+	if want := newStart.UTC().Add(started.Duration); !moved.StopTime.Equal(want) {
+		t.Fatalf("stop not recomputed: got %v want %v", moved.StopTime, want)
+	}
+
+	// Persisted?
+	got, err := st.GetSession(ctx, started.ID)
+	if err != nil || !got.StartTime.Equal(newStart.UTC()) {
+		t.Fatalf("reload after move: %+v, err=%v", got, err)
+	}
+}
+
+func TestMoveSession_NotFound(t *testing.T) {
+	st := newTestStore(t)
+	if _, err := st.MoveSession(context.Background(), 404, time.Now()); !errors.Is(err, ErrSessionNotFound) {
+		t.Fatalf("expected ErrSessionNotFound, got %v", err)
+	}
+}
+
 func TestFinishActiveSession_NoActive(t *testing.T) {
 	st := newTestStore(t)
 	if err := st.FinishActiveSession(context.Background(), StatusDone); !errors.Is(err, ErrNoActive) {

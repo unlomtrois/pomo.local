@@ -66,6 +66,47 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, sess)
 }
 
+// moveRequest is the PATCH /api/sessions/{id} body: the new start time as
+// RFC3339. Duration is preserved, so stop_time is recomputed server-side.
+type moveRequest struct {
+	StartTime time.Time `json:"start_time"`
+}
+
+func (s *Server) handleMove(w http.ResponseWriter, r *http.Request) {
+	id, err := parsePositiveInt64(r.PathValue("id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid session id")
+		return
+	}
+
+	var req moveRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if req.StartTime.IsZero() {
+		writeError(w, http.StatusBadRequest, "start_time is required (RFC3339)")
+		return
+	}
+
+	sess, err := s.store.MoveSession(r.Context(), id, req.StartTime)
+	if errors.Is(err, store.ErrSessionNotFound) {
+		writeError(w, http.StatusNotFound, "session not found")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// If the moved session is still the active one, re-arm its timer for the
+	// new stop time so the completion notification fires at the right moment.
+	if sess.Status == store.StatusActive {
+		s.arm(sess, time.Until(sess.StopTime))
+	}
+	writeJSON(w, http.StatusOK, sess)
+}
+
 func (s *Server) handleActive(w http.ResponseWriter, r *http.Request) {
 	sess, err := s.store.ActiveSession(r.Context())
 	if errors.Is(err, store.ErrNoActive) {
@@ -125,6 +166,11 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+func parsePositiveInt64(s string) (int64, error) {
+	n, err := parsePositiveInt(s)
+	return int64(n), err
 }
 
 func parsePositiveInt(s string) (int, error) {
