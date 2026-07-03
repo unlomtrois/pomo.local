@@ -229,6 +229,22 @@ func (s *Store) SessionByHashPrefix(ctx context.Context, prefix string) (*Sessio
 	}
 }
 
+// DeleteSession removes a session by id. Returns ErrSessionNotFound if none.
+func (s *Store) DeleteSession(ctx context.Context, id int64) error {
+	res, err := s.db.ExecContext(ctx, `DELETE FROM sessions WHERE id = ?`, id)
+	if err != nil {
+		return fmt.Errorf("delete session: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("delete session rows: %w", err)
+	}
+	if n == 0 {
+		return ErrSessionNotFound
+	}
+	return nil
+}
+
 // ListSessions returns the most recent sessions, newest first, capped at limit.
 func (s *Store) ListSessions(ctx context.Context, limit int) ([]*Session, error) {
 	if limit <= 0 {

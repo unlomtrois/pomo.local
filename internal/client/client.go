@@ -161,6 +161,34 @@ func (c *Client) SessionByHash(ctx context.Context, prefix string) (*Session, er
 	}
 }
 
+// DeleteByHash deletes a session by hash prefix and returns the deleted row.
+func (c *Client) DeleteByHash(ctx context.Context, prefix string) (*Session, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.base+"/api/sessions/by-hash/"+prefix, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var sess Session
+		if err := json.NewDecoder(resp.Body).Decode(&sess); err != nil {
+			return nil, err
+		}
+		return &sess, nil
+	case http.StatusNotFound:
+		return nil, ErrSessionNotFound
+	case http.StatusConflict:
+		return nil, ErrAmbiguousHash
+	default:
+		return nil, fmt.Errorf("delete failed: %s: %s", resp.Status, readErr(resp.Body))
+	}
+}
+
 // ListSessions returns recent sessions, newest first.
 func (c *Client) ListSessions(ctx context.Context, limit int) ([]Session, error) {
 	path := fmt.Sprintf("/api/sessions?limit=%d", limit)

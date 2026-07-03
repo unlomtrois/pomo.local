@@ -146,6 +146,26 @@ func TestEndKeepsTopicWhenNil(t *testing.T) {
 	}
 }
 
+func TestDeleteSession(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+
+	s, err := st.StartSession(ctx, StartParams{Topic: "del", Duration: time.Minute, Source: "cli"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.DeleteSession(ctx, s.ID); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	if _, err := st.GetSession(ctx, s.ID); !errors.Is(err, ErrSessionNotFound) {
+		t.Fatalf("expected gone, got %v", err)
+	}
+	// Deleting again is a not-found.
+	if err := st.DeleteSession(ctx, s.ID); !errors.Is(err, ErrSessionNotFound) {
+		t.Fatalf("expected ErrSessionNotFound, got %v", err)
+	}
+}
+
 func TestEndActiveSession_NoActive(t *testing.T) {
 	st := newTestStore(t)
 	if _, err := st.EndActiveSession(context.Background(), nil); !errors.Is(err, ErrNoActive) {

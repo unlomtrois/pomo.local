@@ -217,6 +217,37 @@ func (s *Server) handleByHash(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, sess)
 }
 
+func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
+	prefix := r.PathValue("prefix")
+	if len(prefix) < 4 {
+		writeError(w, http.StatusBadRequest, "hash prefix must be at least 4 characters")
+		return
+	}
+	sess, err := s.store.SessionByHashPrefix(r.Context(), prefix)
+	if errors.Is(err, store.ErrSessionNotFound) {
+		writeError(w, http.StatusNotFound, "no session matching "+prefix)
+		return
+	}
+	if errors.Is(err, store.ErrAmbiguousHash) {
+		writeError(w, http.StatusConflict, "ambiguous hash prefix "+prefix)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// If the deleted session is the active one, cancel any pending timer so it
+	// doesn't fire against a now-nonexistent row.
+	s.disarm(sess.ID)
+
+	if err := s.store.DeleteSession(r.Context(), sess.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, sess) // return the deleted session for confirmation
+}
+
 func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {
 	limit := 50
 	if v := r.URL.Query().Get("limit"); v != "" {

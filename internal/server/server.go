@@ -52,6 +52,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions", s.handleStart)
 	mux.HandleFunc("GET /api/sessions", s.handleList)
 	mux.HandleFunc("GET /api/sessions/by-hash/{prefix}", s.handleByHash)
+	mux.HandleFunc("DELETE /api/sessions/by-hash/{prefix}", s.handleDelete)
 	mux.HandleFunc("PATCH /api/sessions/{id}", s.handleMove)
 	mux.HandleFunc("GET /api/sessions/active", s.handleActive)
 	mux.HandleFunc("POST /api/sessions/active/stop", s.handleStop)
