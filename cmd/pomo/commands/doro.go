@@ -15,15 +15,15 @@ import (
 )
 
 var doroCmd = &cobra.Command{
-	Use:   "doro",
+	Use:   "doro [topic]",
 	Short: "Start a pomodoro session (fixed timer)",
+	Args:  cobra.MaximumNArgs(1),
 	RunE:  runDoro,
 }
 
 func init() {
 	rootCmd.AddCommand(doroCmd)
 
-	doroCmd.Flags().StringP("topic", "t", "", "Topic of your pomodoro session")
 	doroCmd.Flags().StringP("message", "m", "Pomodoro session is ended!", "Notification message")
 	doroCmd.Flags().DurationP("duration", "d", 25*time.Minute, "Timer duration")
 	doroCmd.Flags().String("hint", utils.HintDefault, "Hint the same as notify-send hint")
@@ -31,13 +31,16 @@ func init() {
 	doroCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 }
 
-func runDoro(cmd *cobra.Command, _ []string) error {
+func runDoro(cmd *cobra.Command, args []string) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	if verbose {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 
-	topic, _ := cmd.Flags().GetString("topic")
+	var topic string
+	if len(args) == 1 {
+		topic = args[0]
+	}
 	message, _ := cmd.Flags().GetString("message")
 	duration, _ := cmd.Flags().GetDuration("duration")
 	hint, _ := cmd.Flags().GetString("hint")

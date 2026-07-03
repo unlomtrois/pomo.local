@@ -3,11 +3,11 @@
 It sends notifications using `libnotify` and schedules them using `systemd-run` or `at` (if no systemd).
 
 ```sh
-pomo doro -t "working on something" # starts 25 minute session
+pomo doro "working on something" # starts 25 minute session
 ```
 
 ```sh
-pomo doro -t "very big task" -d 1h # you can control duration 
+pomo doro "very big task" -d 1h # you can control duration 
 ```
 
 ```sh
@@ -25,7 +25,7 @@ pomo end "fixed the flaky test"   # ...name it when you finish (end/stop are ali
 ```
 
 ```sh
-pomo rest # alias for pomo doro -t "Break" -m "Break is over, get back to work\!" -d 5m
+pomo rest # alias for pomo doro "Break" -m "Break is over, get back to work\!" -d 5m
 ```
 
 ```sh
