@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 	"pomo.local/internal/client"
+	"pomo.local/internal/mdns"
 	"pomo.local/internal/server"
 	"pomo.local/internal/store"
 )
@@ -30,6 +33,8 @@ func init() {
 	rootCmd.AddCommand(daemonCmd)
 
 	daemonCmd.Flags().StringP("addr", "a", client.DefaultAddr, "Address to listen on")
+	daemonCmd.Flags().Bool("mdns", false, "Advertise <host>.local via mDNS and bind all interfaces")
+	daemonCmd.Flags().String("host", "pomo", "mDNS hostname (advertised as <host>.local)")
 	daemonCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 }
 
@@ -39,6 +44,17 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 	addr, _ := cmd.Flags().GetString("addr")
+	mdnsOn, _ := cmd.Flags().GetBool("mdns")
+	mdnsHost, _ := cmd.Flags().GetString("host")
+
+	// mDNS only helps if the daemon accepts connections from the LAN, so when
+	// it's on and we'd otherwise bind loopback-only, listen on all interfaces.
+	if mdnsOn {
+		if host, port, err := net.SplitHostPort(addr); err == nil && isLoopback(host) {
+			addr = net.JoinHostPort("0.0.0.0", port)
+			slog.Info("mdns: binding all interfaces so the .local name is reachable", "addr", addr)
+		}
+	}
 
 	dbPath, err := xdg.DataFile("pomo/pomo.db")
 	if err != nil {
@@ -76,6 +92,18 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 		}
 	}()
 
+	if mdnsOn {
+		if _, portStr, err := net.SplitHostPort(addr); err == nil {
+			port, _ := strconv.Atoi(portStr)
+			if ad, err := mdns.Advertise(mdnsHost, port); err != nil {
+				slog.Error("mdns advertise failed", "err", err)
+			} else {
+				slog.Info("mdns: reachable at", "url", fmt.Sprintf("http://%s.local:%d", mdnsHost, port))
+				defer func() { _ = ad.Close() }()
+			}
+		}
+	}
+
 	select {
 	case err := <-errCh:
 		return err
@@ -90,4 +118,12 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	}
 	slog.Info("daemon stopped")
 	return nil
+}
+
+func isLoopback(host string) bool {
+	if host == "localhost" || host == "" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
