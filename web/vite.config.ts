@@ -3,6 +3,14 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	// In dev, proxy the daemon's API so the browser sees it as same-origin
+	// (avoids CORS and mirrors the embedded-in-daemon production setup).
+	server: {
+		proxy: {
+			'/api': 'http://127.0.0.1:7420',
+			'/healthz': 'http://127.0.0.1:7420'
+		}
+	},
 	plugins: [
 		sveltekit({
 			compilerOptions: {

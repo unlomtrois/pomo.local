@@ -1,10 +1,9 @@
 // Thin client for the pomo daemon HTTP API.
 //
-// In production the Svelte app is served by the daemon itself, so the API is
-// same-origin (base = ''). During `vite dev` the app runs on :5173 while the
-// daemon listens on :7420, so target it directly. VITE_POMO_API overrides both.
-const BASE =
-	import.meta.env.VITE_POMO_API ?? (import.meta.env.DEV ? 'http://127.0.0.1:7420' : '');
+// Same-origin in both modes: in production the daemon serves this app; in dev
+// the Vite proxy (see vite.config.ts) forwards /api and /healthz to the daemon.
+// VITE_POMO_API can override to point at a remote daemon.
+const BASE = import.meta.env.VITE_POMO_API ?? '';
 
 export interface Session {
 	id: number;
