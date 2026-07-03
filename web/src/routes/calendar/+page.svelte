@@ -242,6 +242,9 @@
 					}}
 					ondrop={(e) => onDrop(e, day)}
 				>
+					{#each HOURS as h (h)}
+						<div class="hline" style="top:{h * HH}px"></div>
+					{/each}
 					{#each layoutDay(sessionsForDay(day)) as p (p.s.id)}
 						<article
 							class="card"
@@ -387,8 +390,16 @@
 	.col {
 		position: relative;
 		border-left: 1px solid #eee;
-		background-image: linear-gradient(to bottom, #ececec 1px, transparent 1px);
-		background-size: 100% var(--hh);
+	}
+
+	/* Hour guide lines live inside each .col — the same positioning context as
+	   the cards — so line and card tops share an origin and align exactly. */
+	.hline {
+		position: absolute;
+		left: 0;
+		right: 0;
+		border-top: 1px solid #ececec;
+		pointer-events: none;
 	}
 	.col.over {
 		background-color: #eef6ff;
@@ -396,6 +407,9 @@
 
 	.card {
 		position: absolute;
+		/* Without this, padding + borders are added on top of the calc() width,
+		   pushing each card ~12px past its day column into the next day. */
+		box-sizing: border-box;
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
