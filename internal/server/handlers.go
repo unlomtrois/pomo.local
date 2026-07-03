@@ -20,6 +20,7 @@ type startRequest struct {
 	Email       bool   `json:"email"`
 	Project     string `json:"project"`      // stable ext id from .pomo/config.json
 	ProjectName string `json:"project_name"` // display name from .pomo
+	Open        bool   `json:"open"`         // open-ended stopwatch (no timer)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -65,6 +66,7 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 		Hint:      req.Hint,
 		Email:     req.Email,
 		ProjectID: projectID,
+		Open:      req.Open,
 	})
 	if errors.Is(err, store.ErrActiveExists) {
 		writeError(w, http.StatusConflict, "you can only have 1 active pomodoro session at once")
@@ -75,7 +77,10 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.arm(sess, time.Until(sess.StopTime))
+	// Open stopwatches have no completion timer; only doros are armed.
+	if !sess.Open {
+		s.arm(sess, time.Until(sess.StopTime))
+	}
 	writeJSON(w, http.StatusCreated, sess)
 }
 
@@ -151,6 +156,43 @@ func (s *Server) handleStop(w http.ResponseWriter, r *http.Request) {
 	}
 	sess.Status = store.StatusCancelled
 	writeJSON(w, http.StatusOK, sess)
+}
+
+// endRequest is the optional POST /api/sessions/active/end body. A nil Topic
+// keeps the session's existing topic; a non-empty one overrides it.
+type endRequest struct {
+	Topic *string `json:"topic"`
+}
+
+func (s *Server) handleEnd(w http.ResponseWriter, r *http.Request) {
+	var req endRequest
+	// Body is optional (`pomo end` with no topic sends none).
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	// Disarm any timer (a doro stopped early) before closing the session.
+	sess, err := s.store.ActiveSession(r.Context())
+	if errors.Is(err, store.ErrNoActive) {
+		writeError(w, http.StatusNotFound, "no active pomodoro session")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	s.disarm(sess.ID)
+
+	ended, err := s.store.EndActiveSession(r.Context(), req.Topic)
+	if errors.Is(err, store.ErrNoActive) {
+		writeError(w, http.StatusNotFound, "no active pomodoro session")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, ended)
 }
 
 func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {

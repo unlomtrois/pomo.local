@@ -37,6 +37,7 @@ type Session struct {
 	Message   string    `json:"message"`
 	Hint      string    `json:"hint"`
 	Email     bool      `json:"email"`
+	Open      bool      `json:"open"`
 }
 
 // StartParams is the payload for StartSession. Duration is a Go duration string.
@@ -49,6 +50,7 @@ type StartParams struct {
 	Email       bool   `json:"email"`
 	Project     string `json:"project,omitempty"`      // .pomo stable id
 	ProjectName string `json:"project_name,omitempty"` // .pomo display name
+	Open        bool   `json:"open,omitempty"`         // open-ended stopwatch
 }
 
 // Client talks to a pomo daemon over HTTP.
@@ -104,6 +106,20 @@ func (c *Client) ActiveSession(ctx context.Context) (*Session, error) {
 func (c *Client) StopActive(ctx context.Context) (*Session, error) {
 	var sess Session
 	if err := c.do(ctx, http.MethodPost, "/api/sessions/active/stop", nil, &sess); err != nil {
+		return nil, err
+	}
+	return &sess, nil
+}
+
+// EndActive closes the active session, optionally overriding its topic (empty
+// topic keeps the existing one). Returns ErrNoActive if none is active.
+func (c *Client) EndActive(ctx context.Context, topic string) (*Session, error) {
+	var body any
+	if topic != "" {
+		body = map[string]string{"topic": topic}
+	}
+	var sess Session
+	if err := c.do(ctx, http.MethodPost, "/api/sessions/active/end", body, &sess); err != nil {
 		return nil, err
 	}
 	return &sess, nil

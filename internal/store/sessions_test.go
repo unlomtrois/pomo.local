@@ -101,6 +101,58 @@ func TestMoveSession_NotFound(t *testing.T) {
 	}
 }
 
+func TestOpenSessionStartAndEnd(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+
+	started, err := st.StartSession(ctx, StartParams{Source: "cli", Open: true})
+	if err != nil {
+		t.Fatalf("start open: %v", err)
+	}
+	if !started.Open || started.Duration != 0 || started.Topic != "" {
+		t.Fatalf("unexpected open session: %+v", started)
+	}
+
+	// End with a topic override; duration should reflect elapsed (>= 0), status done.
+	topic := "named at end"
+	ended, err := st.EndActiveSession(ctx, &topic)
+	if err != nil {
+		t.Fatalf("end: %v", err)
+	}
+	if ended.Topic != topic || ended.Status != StatusDone || ended.Open {
+		t.Fatalf("unexpected ended session: %+v", ended)
+	}
+	if ended.StopTime.Before(ended.StartTime) {
+		t.Fatalf("stop before start")
+	}
+	// Slot is free again.
+	if _, err := st.ActiveSession(ctx); !errors.Is(err, ErrNoActive) {
+		t.Fatalf("expected no active after end, got %v", err)
+	}
+}
+
+func TestEndKeepsTopicWhenNil(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	if _, err := st.StartSession(ctx, StartParams{Topic: "original", Source: "cli", Open: true}); err != nil {
+		t.Fatal(err)
+	}
+	ended, err := st.EndActiveSession(ctx, nil)
+	if err != nil {
+		t.Fatalf("end: %v", err)
+	}
+	if ended.Topic != "original" {
+		t.Fatalf("topic = %q, want original", ended.Topic)
+	}
+}
+
+func TestEndActiveSession_NoActive(t *testing.T) {
+	st := newTestStore(t)
+	if _, err := st.EndActiveSession(context.Background(), nil); !errors.Is(err, ErrNoActive) {
+		t.Fatalf("expected ErrNoActive, got %v", err)
+	}
+}
+
 func TestFinishActiveSession_NoActive(t *testing.T) {
 	st := newTestStore(t)
 	if err := st.FinishActiveSession(context.Background(), StatusDone); !errors.Is(err, ErrNoActive) {

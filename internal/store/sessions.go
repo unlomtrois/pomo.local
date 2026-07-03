@@ -40,6 +40,7 @@ type Session struct {
 	Message   string        `json:"message"`
 	Hint      string        `json:"hint"`
 	Email     bool          `json:"email"`
+	Open      bool          `json:"open"`
 }
 
 // StartParams describes a session to start.
@@ -51,12 +52,18 @@ type StartParams struct {
 	Hint      string
 	Email     bool
 	ProjectID *int64 // internal projects.id, or nil for no project
+	Open      bool   // open-ended stopwatch: no fixed stop, no timer
 }
 
 // StartSession inserts a new active session. It fails with ErrActiveExists if
 // one is already active, enforced atomically by the partial unique index.
 func (s *Store) StartSession(ctx context.Context, p StartParams) (*Session, error) {
 	start := time.Now().UTC()
+	// Open sessions have no fixed duration; stop_time/duration are placeholders
+	// until EndActiveSession fills them.
+	if p.Open {
+		p.Duration = 0
+	}
 	stop := start.Add(p.Duration)
 
 	var projectID any
@@ -64,10 +71,10 @@ func (s *Store) StartSession(ctx context.Context, p StartParams) (*Session, erro
 		projectID = *p.ProjectID
 	}
 	res, err := s.db.ExecContext(ctx,
-		`INSERT INTO sessions (topic, project_id, start_time, stop_time, duration, status, source, message, hint, email)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO sessions (topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.Topic, projectID, start.Format(time.RFC3339Nano), stop.Format(time.RFC3339Nano),
-		int64(p.Duration), StatusActive, p.Source, p.Message, p.Hint, boolToInt(p.Email),
+		int64(p.Duration), StatusActive, p.Source, p.Message, p.Hint, boolToInt(p.Email), boolToInt(p.Open),
 	)
 	if err != nil {
 		if isUniqueViolation(err) {
@@ -84,14 +91,14 @@ func (s *Store) StartSession(ctx context.Context, p StartParams) (*Session, erro
 	return &Session{
 		ID: id, Topic: p.Topic, ProjectID: p.ProjectID, StartTime: start, StopTime: stop,
 		Duration: p.Duration, Status: StatusActive, Source: p.Source,
-		Message: p.Message, Hint: p.Hint, Email: p.Email,
+		Message: p.Message, Hint: p.Hint, Email: p.Email, Open: p.Open,
 	}, nil
 }
 
 // ActiveSession returns the currently active session, or ErrNoActive if none.
 func (s *Store) ActiveSession(ctx context.Context) (*Session, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email
+		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
 		 FROM sessions WHERE status = ? LIMIT 1`, StatusActive)
 
 	sess, err := scanSession(row)
@@ -119,10 +126,44 @@ func (s *Store) FinishActiveSession(ctx context.Context, status string) error {
 	return nil
 }
 
+// EndActiveSession closes the active session (open stopwatch or a doro stopped
+// early): records the actual elapsed time, marks it done, clears the open flag,
+// and optionally overrides the topic. Returns ErrNoActive if none is active.
+func (s *Store) EndActiveSession(ctx context.Context, topic *string) (*Session, error) {
+	sess, err := s.ActiveSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	stop := time.Now().UTC()
+	dur := stop.Sub(sess.StartTime)
+	if dur < 0 {
+		dur = 0
+	}
+	newTopic := sess.Topic
+	if topic != nil && *topic != "" {
+		newTopic = *topic
+	}
+
+	if _, err := s.db.ExecContext(ctx,
+		`UPDATE sessions SET stop_time = ?, duration = ?, status = ?, topic = ?, open = 0 WHERE id = ?`,
+		stop.Format(time.RFC3339Nano), int64(dur), StatusDone, newTopic, sess.ID,
+	); err != nil {
+		return nil, fmt.Errorf("end session: %w", err)
+	}
+
+	sess.StopTime = stop
+	sess.Duration = dur
+	sess.Status = StatusDone
+	sess.Topic = newTopic
+	sess.Open = false
+	return sess, nil
+}
+
 // GetSession returns a single session by id, or ErrSessionNotFound.
 func (s *Store) GetSession(ctx context.Context, id int64) (*Session, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email
+		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
 		 FROM sessions WHERE id = ?`, id)
 	sess, err := scanSession(row)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -160,7 +201,7 @@ func (s *Store) ListSessions(ctx context.Context, limit int) ([]*Session, error)
 		limit = 50
 	}
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email
+		`SELECT id, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
 		 FROM sessions ORDER BY start_time DESC LIMIT ?`, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list sessions: %w", err)
@@ -191,15 +232,17 @@ func scanSession(sc rowScanner) (*Session, error) {
 		stop      string
 		durNanos  int64
 		email     int64
+		open      int64
 	)
 	if err := sc.Scan(&sess.ID, &sess.Topic, &projectID, &start, &stop, &durNanos,
-		&sess.Status, &sess.Source, &sess.Message, &sess.Hint, &email); err != nil {
+		&sess.Status, &sess.Source, &sess.Message, &sess.Hint, &email, &open); err != nil {
 		return nil, err
 	}
 	if projectID.Valid {
 		sess.ProjectID = &projectID.Int64
 	}
 	sess.Email = email != 0
+	sess.Open = open != 0
 	var err error
 	if sess.StartTime, err = time.Parse(time.RFC3339Nano, start); err != nil {
 		return nil, fmt.Errorf("parse start_time: %w", err)

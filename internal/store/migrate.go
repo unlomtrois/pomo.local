@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS sessions (
 	message    TEXT NOT NULL DEFAULT '',
 	hint       TEXT NOT NULL DEFAULT '',
 	email      INTEGER NOT NULL DEFAULT 0,
+	-- open = 1 marks an open-ended stopwatch session (pomo start/end): no fixed
+	-- stop time and no completion timer; stop_time/duration are filled on end.
+	open       INTEGER NOT NULL DEFAULT 0,
 	created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -65,6 +68,12 @@ func (s *Store) migrate(ctx context.Context) error {
 	if _, err := s.db.ExecContext(ctx,
 		`CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_ext ON projects(ext_id)`); err != nil {
 		return fmt.Errorf("migrate ext_id index: %w", err)
+	}
+	// Add the open-session flag to pre-existing sessions tables.
+	if _, err := s.db.ExecContext(ctx, `ALTER TABLE sessions ADD COLUMN open INTEGER NOT NULL DEFAULT 0`); err != nil {
+		if !strings.Contains(err.Error(), "duplicate column name") {
+			return fmt.Errorf("migrate open: %w", err)
+		}
 	}
 	return nil
 }

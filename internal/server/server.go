@@ -54,6 +54,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PATCH /api/sessions/{id}", s.handleMove)
 	mux.HandleFunc("GET /api/sessions/active", s.handleActive)
 	mux.HandleFunc("POST /api/sessions/active/stop", s.handleStop)
+	mux.HandleFunc("POST /api/sessions/active/end", s.handleEnd)
 	return mux
 }
 
@@ -67,6 +68,11 @@ func (s *Server) Reconcile(ctx context.Context) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	if sess.Open {
+		slog.Info("reconcile: active session is an open stopwatch, no timer", "id", sess.ID)
+		return nil
 	}
 
 	if time.Now().After(sess.StopTime) {

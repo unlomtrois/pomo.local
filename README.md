@@ -15,6 +15,16 @@ pomo doro # you can skip args
 ```
 
 ```sh
+pomo start "refactoring"   # open-ended stopwatch (no fixed timer)
+pomo end                   # ...stop it later; records how long it ran
+```
+
+```sh
+pomo start                 # don't know the label yet? start bare
+pomo end "fixed the flaky test"   # ...name it when you finish (end/stop are aliases)
+```
+
+```sh
 pomo rest # alias for pomo doro -t "Break" -m "Break is over, get back to work\!" -d 5m
 ```
 
