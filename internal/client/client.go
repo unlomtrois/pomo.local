@@ -161,6 +161,49 @@ func (c *Client) SessionByHash(ctx context.Context, prefix string) (*Session, er
 	}
 }
 
+// EditParams is a partial update; nil fields are omitted from the request and
+// left unchanged. A non-nil pointer to "" clears the topic.
+type EditParams struct {
+	Topic    *string    `json:"topic,omitempty"`
+	Start    *time.Time `json:"start_time,omitempty"`
+	Duration *string    `json:"duration,omitempty"` // Go duration string
+}
+
+// EditByHash applies a partial update to a session resolved by hash prefix.
+func (c *Client) EditByHash(ctx context.Context, prefix string, p EditParams) (*Session, error) {
+	data, err := json.Marshal(p)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch,
+		c.base+"/api/sessions/by-hash/"+prefix, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		var sess Session
+		if err := json.NewDecoder(resp.Body).Decode(&sess); err != nil {
+			return nil, err
+		}
+		return &sess, nil
+	case http.StatusNotFound:
+		return nil, ErrSessionNotFound
+	case http.StatusConflict:
+		return nil, ErrAmbiguousHash
+	default:
+		return nil, fmt.Errorf("edit failed: %s: %s", resp.Status, readErr(resp.Body))
+	}
+}
+
 // DeleteByHash deletes a session by hash prefix and returns the deleted row.
 func (c *Client) DeleteByHash(ctx context.Context, prefix string) (*Session, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, c.base+"/api/sessions/by-hash/"+prefix, nil)

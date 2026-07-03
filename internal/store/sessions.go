@@ -245,6 +245,49 @@ func (s *Store) DeleteSession(ctx context.Context, id int64) error {
 	return nil
 }
 
+// EditParams is a partial update: only non-nil fields change.
+type EditParams struct {
+	Topic    *string
+	Start    *time.Time
+	Duration *time.Duration
+}
+
+// EditSession applies a partial update to a session, keeping the invariant
+// stop_time = start + duration. Returns ErrSessionNotFound if the id is unknown.
+func (s *Store) EditSession(ctx context.Context, id int64, p EditParams) (*Session, error) {
+	sess, err := s.GetSession(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	start := sess.StartTime
+	if p.Start != nil {
+		start = p.Start.UTC()
+	}
+	dur := sess.Duration
+	if p.Duration != nil {
+		dur = *p.Duration
+	}
+	stop := start.Add(dur)
+	topic := sess.Topic
+	if p.Topic != nil {
+		topic = *p.Topic
+	}
+
+	if _, err := s.db.ExecContext(ctx,
+		`UPDATE sessions SET topic = ?, start_time = ?, stop_time = ?, duration = ? WHERE id = ?`,
+		topic, start.Format(time.RFC3339Nano), stop.Format(time.RFC3339Nano), int64(dur), id,
+	); err != nil {
+		return nil, fmt.Errorf("edit session: %w", err)
+	}
+
+	sess.Topic = topic
+	sess.StartTime = start
+	sess.StopTime = stop
+	sess.Duration = dur
+	return sess, nil
+}
+
 // ListSessions returns the most recent sessions, newest first, capped at limit.
 func (s *Store) ListSessions(ctx context.Context, limit int) ([]*Session, error) {
 	if limit <= 0 {

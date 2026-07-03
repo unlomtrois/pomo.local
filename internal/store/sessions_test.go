@@ -146,6 +146,54 @@ func TestEndKeepsTopicWhenNil(t *testing.T) {
 	}
 }
 
+func TestEditSessionPartial(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+
+	s, err := st.StartSession(ctx, StartParams{Topic: "orig", Duration: 25 * time.Minute, Source: "cli"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	origStart := s.StartTime
+
+	// Topic-only edit leaves timing untouched.
+	newTopic := "renamed"
+	got, err := st.EditSession(ctx, s.ID, EditParams{Topic: &newTopic})
+	if err != nil {
+		t.Fatalf("edit topic: %v", err)
+	}
+	if got.Topic != "renamed" || got.Duration != 25*time.Minute || !got.StartTime.Equal(origStart) {
+		t.Fatalf("topic-only edit changed timing: %+v", got)
+	}
+
+	// Duration edit recomputes stop; start preserved.
+	newDur := 40 * time.Minute
+	got, err = st.EditSession(ctx, s.ID, EditParams{Duration: &newDur})
+	if err != nil {
+		t.Fatalf("edit duration: %v", err)
+	}
+	if got.Duration != newDur || !got.StopTime.Equal(origStart.Add(newDur)) {
+		t.Fatalf("duration edit wrong: %+v", got)
+	}
+
+	// Start edit slides the block, keeping (the now 40m) duration.
+	newStart := origStart.Add(48 * time.Hour)
+	got, err = st.EditSession(ctx, s.ID, EditParams{Start: &newStart})
+	if err != nil {
+		t.Fatalf("edit start: %v", err)
+	}
+	if !got.StartTime.Equal(newStart.UTC()) || !got.StopTime.Equal(newStart.UTC().Add(newDur)) {
+		t.Fatalf("start edit wrong: %+v", got)
+	}
+}
+
+func TestEditSession_NotFound(t *testing.T) {
+	st := newTestStore(t)
+	if _, err := st.EditSession(context.Background(), 999, EditParams{}); !errors.Is(err, ErrSessionNotFound) {
+		t.Fatalf("expected ErrSessionNotFound, got %v", err)
+	}
+}
+
 func TestDeleteSession(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()

@@ -217,6 +217,64 @@ func (s *Server) handleByHash(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, sess)
 }
 
+// editRequest is the PATCH /api/sessions/by-hash/{prefix} body. All fields are
+// optional; only present ones change (partial update). Duration is a Go string.
+type editRequest struct {
+	Topic     *string    `json:"topic"`
+	StartTime *time.Time `json:"start_time"`
+	Duration  *string    `json:"duration"`
+}
+
+func (s *Server) handleEdit(w http.ResponseWriter, r *http.Request) {
+	prefix := r.PathValue("prefix")
+	if len(prefix) < 4 {
+		writeError(w, http.StatusBadRequest, "hash prefix must be at least 4 characters")
+		return
+	}
+
+	var req editRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+
+	params := store.EditParams{Topic: req.Topic, Start: req.StartTime}
+	if req.Duration != nil {
+		d, err := time.ParseDuration(*req.Duration)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid duration: "+err.Error())
+			return
+		}
+		params.Duration = &d
+	}
+
+	sess, err := s.store.SessionByHashPrefix(r.Context(), prefix)
+	if errors.Is(err, store.ErrSessionNotFound) {
+		writeError(w, http.StatusNotFound, "no session matching "+prefix)
+		return
+	}
+	if errors.Is(err, store.ErrAmbiguousHash) {
+		writeError(w, http.StatusConflict, "ambiguous hash prefix "+prefix)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	updated, err := s.store.EditSession(r.Context(), sess.ID, params)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Re-arm the completion timer if we changed the timing of the active doro.
+	if updated.Status == store.StatusActive && !updated.Open {
+		s.arm(updated, time.Until(updated.StopTime))
+	}
+	writeJSON(w, http.StatusOK, updated)
+}
+
 func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 	prefix := r.PathValue("prefix")
 	if len(prefix) < 4 {
