@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { listSessions, moveSession, type Session } from '$lib/api';
+	import { listSessions, moveSession, startSession, type Session } from '$lib/api';
 	import { startOfWeek, addDays, dayKey, isSameDay, withTimeOfDay, WEEKDAYS } from '$lib/week';
 
 	const HH = 48; // pixels per hour (must drive both layout and card positioning)
@@ -95,6 +95,29 @@
 		}
 	}
 
+	// Toggl-style bottom quick-add.
+	let qtopic = $state('');
+	let qbusy = $state(false);
+
+	async function loadSessions() {
+		sessions = await listSessions(500);
+	}
+
+	async function startQuick() {
+		if (qbusy) return;
+		qbusy = true;
+		error = null;
+		try {
+			await startSession({ topic: qtopic.trim(), duration: '25m' });
+			qtopic = '';
+			await loadSessions();
+		} catch (e) {
+			error = e instanceof Error ? e.message : String(e);
+		} finally {
+			qbusy = false;
+		}
+	}
+
 	onMount(() => {
 		const mq = window.matchMedia('(max-width: 640px)');
 		narrow = mq.matches;
@@ -103,7 +126,7 @@
 
 		(async () => {
 			try {
-				sessions = await listSessions(500);
+				await loadSessions();
 			} catch (e) {
 				error = e instanceof Error ? e.message : String(e);
 			} finally {
@@ -187,6 +210,23 @@
 				</section>
 			{/each}
 		</div>
+	</div>
+
+	<div class="quickbar">
+		<input
+			class="qinput"
+			type="text"
+			placeholder="I'm working on…"
+			bind:value={qtopic}
+			onkeydown={(e) => e.key === 'Enter' && startQuick()}
+		/>
+		<button class="play" onclick={startQuick} disabled={qbusy} aria-label="Start 25m session">
+			{#if qbusy}
+				<span class="spin">⏳</span>
+			{:else}
+				▶
+			{/if}
+		</button>
 	</div>
 </main>
 
@@ -338,5 +378,47 @@
 	.tt {
 		color: #888;
 		font-size: 0.68rem;
+	}
+
+	/* Toggl-style bottom quick-add bar. */
+	.quickbar {
+		flex: none;
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.6rem 0.8rem;
+		border-top: 1px solid #eee;
+		background: #fff;
+		box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.04);
+	}
+	.qinput {
+		flex: 1;
+		padding: 0.7rem 0.9rem;
+		border: 1px solid #ddd;
+		border-radius: 999px;
+		font: inherit;
+		font-size: 1rem;
+	}
+	.qinput:focus {
+		outline: none;
+		border-color: #e03a3a;
+	}
+	.play {
+		flex: none;
+		width: 3rem;
+		height: 3rem;
+		border: none;
+		border-radius: 50%;
+		background: #e03a3a;
+		color: #fff;
+		font-size: 1.2rem;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.play:disabled {
+		opacity: 0.6;
+		cursor: default;
 	}
 </style>
