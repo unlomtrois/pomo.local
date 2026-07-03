@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS sessions (
 	duration   INTEGER NOT NULL, -- nanoseconds, matches time.Duration
 	status     TEXT NOT NULL DEFAULT 'active',
 	source     TEXT NOT NULL DEFAULT 'cli',
+	-- completion-notification payload, carried so the daemon's timer can
+	-- reproduce the notify-send + optional email the old scheduler flow did.
+	message    TEXT NOT NULL DEFAULT '',
+	hint       TEXT NOT NULL DEFAULT '',
+	email      INTEGER NOT NULL DEFAULT 0,
 	created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

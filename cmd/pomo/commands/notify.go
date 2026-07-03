@@ -2,15 +2,16 @@ package commands
 
 import (
 	"log/slog"
-	"os"
 
-	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 	"pomo.local/internal/mail"
 	"pomo.local/internal/notifier"
 	"pomo.local/internal/utils"
 )
 
+// notifyCmd sends an immediate notification. In the daemon model the daemon
+// fires session-completion notifications in-process, so this is now a manual
+// utility (e.g. testing notify-send/SMTP) rather than part of the timer flow.
 var notifyCmd = &cobra.Command{
 	Use:   "notify",
 	Short: "Send an immediate notification",
@@ -37,63 +38,11 @@ func runNotify(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	slog.Debug("Removing active_session")
-	if err := removeActiveSession(); err != nil {
-		return err
-	}
-
-	slog.Debug("Removing active_task")
-	if err := removeActiveTask(); err != nil {
-		return err
-	}
-
 	if useEmail {
 		slog.Debug("Sending mail")
 		if err := mail.SendMail(summary, body); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func removeActiveSession() error {
-	activeSessionPath, err := xdg.StateFile("pomo/active_session.json")
-	if err != nil {
-		return nil
-	}
-
-	slog.Debug("Read active_session:", "path", activeSessionPath)
-	if _, err := os.Stat(activeSessionPath); err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-		slog.Debug("active_session not found:", "path", activeSessionPath)
-	}
-
-	if err := os.Remove(activeSessionPath); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func removeActiveTask() error {
-	activeTaskPath, err := xdg.StateFile("pomo/active_task.json")
-	if err != nil {
-		return nil
-	}
-
-	slog.Debug("Read active_task:", "path", activeTaskPath)
-	if _, err := os.Stat(activeTaskPath); err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-		slog.Debug("active_task not found:", "path", activeTaskPath)
-	}
-
-	if err := os.Remove(activeTaskPath); err != nil {
-		return err
 	}
 
 	return nil

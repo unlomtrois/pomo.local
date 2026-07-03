@@ -24,5 +24,5 @@ func runRest(cmd *cobra.Command, _ []string) error {
 	duration, _ := cmd.Flags().GetDuration("duration")
 	useEmail, _ := cmd.Flags().GetBool("email")
 
-	return executeStart("Rest", "Break is over, get back to work!", duration, utils.HintDefault, useEmail, false)
+	return executeStart("Rest", "Break is over, get back to work!", duration, utils.HintDefault, useEmail)
 }

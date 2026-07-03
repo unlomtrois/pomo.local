@@ -12,6 +12,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
+	"pomo.local/internal/client"
 	"pomo.local/internal/server"
 	"pomo.local/internal/store"
 )
@@ -28,7 +29,7 @@ var daemonCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(daemonCmd)
 
-	daemonCmd.Flags().StringP("addr", "a", "127.0.0.1:7420", "Address to listen on")
+	daemonCmd.Flags().StringP("addr", "a", client.DefaultAddr, "Address to listen on")
 	daemonCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 }
 

@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"pomo.local/internal/mail"
 	"pomo.local/internal/notifier"
 	"pomo.local/internal/store"
 )
@@ -69,24 +70,25 @@ func (s *Server) Reconcile(ctx context.Context) error {
 
 	if time.Now().After(sess.StopTime) {
 		slog.Info("reconcile: active session already elapsed, completing", "id", sess.ID)
-		s.complete(sess.ID, sess.Topic)
+		s.complete(sess)
 		return nil
 	}
 
 	remaining := time.Until(sess.StopTime)
 	slog.Info("reconcile: rescheduling active session", "id", sess.ID, "remaining", remaining)
-	s.arm(sess.ID, sess.Topic, remaining)
+	s.arm(sess, remaining)
 	return nil
 }
 
-// arm schedules a completion timer for a session after d.
-func (s *Server) arm(id int64, topic string, d time.Duration) {
+// arm schedules a completion timer for a session after d. The session is
+// captured so the timer goroutine can reproduce its notification payload.
+func (s *Server) arm(sess *store.Session, d time.Duration) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if t, ok := s.timers[id]; ok {
+	if t, ok := s.timers[sess.ID]; ok {
 		t.Stop()
 	}
-	s.timers[id] = time.AfterFunc(d, func() { s.complete(id, topic) })
+	s.timers[sess.ID] = time.AfterFunc(d, func() { s.complete(sess) })
 }
 
 // disarm cancels a pending timer without firing it (used when a session is
@@ -100,23 +102,31 @@ func (s *Server) disarm(id int64) {
 	}
 }
 
-// complete marks the session done and sends the completion notification. It is
-// invoked from the timer goroutine, so it must not assume a request context.
-func (s *Server) complete(id int64, topic string) {
+// complete marks the session done and sends the completion notification (and
+// email, if requested). It is invoked from the timer goroutine, so it must not
+// assume a request context.
+func (s *Server) complete(sess *store.Session) {
 	s.mu.Lock()
-	delete(s.timers, id)
+	delete(s.timers, sess.ID)
 	s.mu.Unlock()
 
 	ctx := context.Background()
 	if err := s.store.FinishActiveSession(ctx, store.StatusDone); err != nil {
-		slog.Error("complete: finish session", "id", id, "err", err)
+		slog.Error("complete: finish session", "id", sess.ID, "err", err)
 		return
 	}
-	body := "Pomodoro session is ended!"
-	if topic != "" {
-		body = topic + " — session ended!"
+
+	body := sess.Message
+	if body == "" {
+		body = "Pomodoro session is ended!"
 	}
-	if err := s.notifier.Notify("Pomodoro", body, ""); err != nil {
-		slog.Error("complete: notify", "id", id, "err", err)
+	if err := s.notifier.Notify("Pomodoro", body, sess.Hint); err != nil {
+		slog.Error("complete: notify", "id", sess.ID, "err", err)
+	}
+
+	if sess.Email {
+		if err := mail.SendMail("Pomodoro", body); err != nil {
+			slog.Error("complete: email", "id", sess.ID, "err", err)
+		}
 	}
 }

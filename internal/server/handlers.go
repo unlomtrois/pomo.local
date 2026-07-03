@@ -15,6 +15,9 @@ type startRequest struct {
 	Topic    string `json:"topic"`
 	Duration string `json:"duration"`
 	Source   string `json:"source"`
+	Message  string `json:"message"`
+	Hint     string `json:"hint"`
+	Email    bool   `json:"email"`
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -42,7 +45,14 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 		source = "cli"
 	}
 
-	sess, err := s.store.StartSession(r.Context(), req.Topic, duration, source)
+	sess, err := s.store.StartSession(r.Context(), store.StartParams{
+		Topic:    req.Topic,
+		Duration: duration,
+		Source:   source,
+		Message:  req.Message,
+		Hint:     req.Hint,
+		Email:    req.Email,
+	})
 	if errors.Is(err, store.ErrActiveExists) {
 		writeError(w, http.StatusConflict, "you can only have 1 active pomodoro session at once")
 		return
@@ -52,7 +62,7 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.arm(sess.ID, sess.Topic, time.Until(sess.StopTime))
+	s.arm(sess, time.Until(sess.StopTime))
 	writeJSON(w, http.StatusCreated, sess)
 }
 

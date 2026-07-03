@@ -18,30 +18,54 @@ Linting uses `revive` plus `errcheck` (see `.golangci.yml`). Deferred `Close` ca
 
 ## Architecture
 
-A Linux-targeted Pomodoro CLI. The key design is **self-re-invocation via the OS scheduler** rather than a long-lived process:
+A Linux-targeted Pomodoro CLI evolving into a localhosted Toggl alternative. The
+current design is a **long-lived daemon that owns all state**; the CLI (and later
+the web UI and MCP server) are thin clients that talk to it over HTTP.
 
-1. `pomo start` (`cmd/pomo/commands/start.go`) builds a `pomo.Session`, resolves its own binary path with `os.Executable()`, and constructs a `scheduler.Task` whose command is `pomo notify --summary ... --body ...`.
-2. The task is handed to a `scheduler.Scheduler` (`internal/scheduler`) which schedules the *same binary* to run at the session's stop time, then the CLI exits immediately. No process stays alive during the timer.
-3. When the timer fires, `pomo notify` (`notify.go`) sends the desktop notification, optionally emails, and cleans up the state files.
+1. `pomo daemon` (`cmd/pomo/commands/daemon.go`) runs the server: it opens the
+   SQLite store, serves the HTTP API (`internal/server`), and holds an
+   in-process timer engine (`time.AfterFunc` per active session) that fires the
+   completion notification/email itself. Intended to run under a systemd `--user`
+   unit. Graceful shutdown on SIGINT/SIGTERM.
+2. `pomo start` (`start.go`) POSTs to the daemon via `internal/client`. If no
+   daemon is reachable, `ensureDaemon` (`ensure.go`) **auto-spawns** a detached
+   `pomo daemon` (`Setsid`, output redirected to `$XDG_STATE_HOME/pomo/daemon.log`)
+   and waits for `/healthz`.
+3. When a session's timer fires, the daemon marks it `done` and calls the
+   notifier (and `mail.SendMail` if the session requested email). On startup
+   `Server.Reconcile` re-arms a still-running session's timer, or completes one
+   that elapsed while the daemon was down.
 
-`scheduler.NewDefault` picks a backend at runtime: `SystemdScheduler` (transient `systemd-run --user` timer) if `systemd-run` is on PATH, else `AtScheduler` (pipes a `sleep && notify` script to `at`). Both implement the `Scheduler` interface; `Cancel` is currently unimplemented (`panic("todo")`).
+The single-active-session invariant is enforced atomically by a **partial unique
+index** (`sessions.status WHERE status='active'`) rather than a state-file check.
 
-### State and persistence (XDG dirs)
+### State and persistence
 
-- `$XDG_STATE_HOME/pomo/active_session.json` — the running session; its existence enforces "only one active session at a time" (checked in `checkPomodoroSession`). `pomo active` reads it; `pomo notify` deletes it.
-- `$XDG_STATE_HOME/pomo/active_task.json` — the scheduled `scheduler.Task`.
-- `$XDG_DATA_HOME/pomo/sessions.csv` — append-only session history (topic, start, stop, duration).
+- `$XDG_DATA_HOME/pomo/pomo.db` — SQLite, the daemon is the **sole writer**
+  (`internal/store`). WAL mode; `sessions` and `projects` tables. Session rows
+  carry the completion payload (`message`, `hint`, `email`) so the daemon's timer
+  can reproduce the notification, plus `status` and `source` (cli/web/mcp).
+- `$XDG_STATE_HOME/pomo/daemon.log` — stdout/stderr of an auto-spawned daemon.
 - `$XDG_CONFIG_HOME/pomo/mail.json` — SMTP host/port/sender/receiver (`internal/config`).
 
 ### Commands (`cmd/pomo/commands`)
 
 Cobra-based; each file registers itself onto `rootCmd` in an `init()`. `main.go` calls `SetVersion` then `Execute`.
 
-- `start` — core flow above. `--email`, `--duration/-d`, `--topic/-t`, `--hint`, `--verbose/-v`.
+- `daemon` — the long-lived server. `--addr/-a` (default `client.DefaultAddr`, `127.0.0.1:7420`), `--verbose/-v`.
+- `start` — daemon client; auto-spawns the daemon. `--email`, `--duration/-d`, `--topic/-t`, `--message/-m`, `--hint`, `--verbose/-v`.
 - `rest` — thin wrapper calling `executeStart("Rest", ...)` with a 5m default.
-- `notify` — the timer callback; not usually run by hand.
-- `active` — inspects the active session; `--remove` clears a stale one.
+- `active` — queries the daemon for the active session; `--remove` cancels it.
+- `notify` — manual immediate-notification utility (no longer part of the timer flow).
 - `auth` — stores SMTP/Toggl secrets in the OS keyring (`go-keyring`) and writes `mail.json`; for `--email` it live-tests the SMTP connection.
+
+### Legacy / not on the main path
+
+- `internal/scheduler` (`systemd-run`/`at` backends) — the pre-daemon
+  self-re-invocation mechanism. Kept as an intended crash-survival fallback (fire
+  a pending notification via the OS if the daemon dies); not currently wired in.
+- `internal/storage/csv.go` and `internal/pomo` CSV serialization — superseded by
+  the SQLite store; CSV is planned to return as an *export* format.
 
 ### Notifications
 

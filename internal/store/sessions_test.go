@@ -22,11 +22,11 @@ func TestStartSession_SingleActiveInvariant(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
 
-	if _, err := st.StartSession(ctx, "first", 25*time.Minute, "cli"); err != nil {
+	if _, err := st.StartSession(ctx, StartParams{Topic: "first", Duration: 25 * time.Minute, Source: "cli"}); err != nil {
 		t.Fatalf("first start: %v", err)
 	}
 
-	_, err := st.StartSession(ctx, "second", 5*time.Minute, "cli")
+	_, err := st.StartSession(ctx, StartParams{Topic: "second", Duration: 5 * time.Minute, Source: "cli"})
 	if !errors.Is(err, ErrActiveExists) {
 		t.Fatalf("expected ErrActiveExists, got %v", err)
 	}
@@ -36,7 +36,7 @@ func TestSessionLifecycle(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
 
-	started, err := st.StartSession(ctx, "topic", time.Minute, "mcp")
+	started, err := st.StartSession(ctx, StartParams{Topic: "topic", Duration: time.Minute, Source: "mcp"})
 	if err != nil {
 		t.Fatalf("start: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestSessionLifecycle(t *testing.T) {
 	}
 
 	// A completed session frees the slot for a new one.
-	if _, err := st.StartSession(ctx, "next", time.Minute, "cli"); err != nil {
+	if _, err := st.StartSession(ctx, StartParams{Topic: "next", Duration: time.Minute, Source: "cli"}); err != nil {
 		t.Fatalf("start after finish: %v", err)
 	}
 }
