@@ -10,19 +10,37 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 
-	let weekOffset = $state(0);
 	let draggingId = $state<number | null>(null);
 	let dragOverKey = $state<string | null>(null);
 	let scroller: HTMLDivElement;
 
+	// A single cursor date drives both views: the week containing it (wide) or
+	// the day itself (narrow). `narrow` tracks a mobile-width media query.
+	let cursor = $state(new Date());
+	let narrow = $state(false);
 	const today = new Date();
-	let weekStart = $derived(startOfWeek(addDays(today, weekOffset * 7)));
-	let days = $derived(Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)));
+
+	let weekStart = $derived(startOfWeek(cursor));
+	let weekDays = $derived(Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)));
+	let selectedDay = $derived.by(() => {
+		const d = new Date(cursor);
+		d.setHours(0, 0, 0, 0);
+		return d;
+	});
+	// Columns actually rendered: one day on mobile, the whole week otherwise.
+	let visibleDays = $derived(narrow ? [selectedDay] : weekDays);
+	let gridCols = $derived(`3.5rem repeat(${visibleDays.length}, 1fr)`);
+
+	function shift(n: number) {
+		cursor = addDays(cursor, narrow ? n : n * 7);
+	}
+	function goToday() {
+		cursor = new Date();
+	}
 
 	function sessionsForDay(day: Date): Session[] {
 		return sessions.filter((s) => isSameDay(new Date(s.start_time), day));
 	}
-
 	function topPx(s: Session): number {
 		const d = new Date(s.start_time);
 		return ((d.getHours() * 60 + d.getMinutes()) / 60) * HH;
@@ -30,7 +48,6 @@
 	function heightPx(s: Session): number {
 		return Math.max(16, (s.duration / 1e9 / 3600) * HH);
 	}
-	// Short cards can't fit two lines — show the title only, drop the time.
 	function showTime(s: Session): boolean {
 		return heightPx(s) >= 34;
 	}
@@ -41,6 +58,9 @@
 		const end = addDays(weekStart, 6);
 		const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
 		return `${weekStart.toLocaleDateString([], opts)} – ${end.toLocaleDateString([], opts)}`;
+	}
+	function dayLabel(): string {
+		return cursor.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
 	}
 
 	function onDragStart(e: DragEvent, s: Session) {
@@ -75,25 +95,34 @@
 		}
 	}
 
-	onMount(async () => {
-		try {
-			sessions = await listSessions(500);
-		} catch (e) {
-			error = e instanceof Error ? e.message : String(e);
-		} finally {
-			loading = false;
-		}
-		if (scroller) scroller.scrollTop = 7 * HH; // open around the working day
+	onMount(() => {
+		const mq = window.matchMedia('(max-width: 640px)');
+		narrow = mq.matches;
+		const onChange = (e: MediaQueryListEvent) => (narrow = e.matches);
+		mq.addEventListener('change', onChange);
+
+		(async () => {
+			try {
+				sessions = await listSessions(500);
+			} catch (e) {
+				error = e instanceof Error ? e.message : String(e);
+			} finally {
+				loading = false;
+			}
+			if (scroller) scroller.scrollTop = 7 * HH; // open around the working day
+		})();
+
+		return () => mq.removeEventListener('change', onChange);
 	});
 </script>
 
 <main class="cal">
 	<header>
 		<h1>🍅 Calendar</h1>
-		<nav class="weeknav">
-			<button onclick={() => (weekOffset -= 1)} aria-label="Previous week">‹</button>
-			<button onclick={() => (weekOffset = 0)}>{weekLabel()}</button>
-			<button onclick={() => (weekOffset += 1)} aria-label="Next week">›</button>
+		<nav class="nav">
+			<button onclick={() => shift(-1)} aria-label={narrow ? 'Previous day' : 'Previous week'}>‹</button>
+			<button class="label" onclick={goToday}>{narrow ? dayLabel() : weekLabel()}</button>
+			<button onclick={() => shift(1)} aria-label={narrow ? 'Next day' : 'Next week'}>›</button>
 		</nav>
 		<a href="/" class="home">← dashboard</a>
 	</header>
@@ -102,9 +131,9 @@
 		<p class="error">{error}</p>
 	{/if}
 
-	<div class="daysrow">
+	<div class="daysrow" style="grid-template-columns:{gridCols}">
 		<div class="corner"></div>
-		{#each days as day (dayKey(day))}
+		{#each visibleDays as day (dayKey(day))}
 			<div class="dayhead" class:istoday={isSameDay(day, today)}>
 				<span class="dow">{WEEKDAYS[(day.getDay() + 6) % 7]}</span>
 				<span class="date">{day.getDate()}</span>
@@ -113,7 +142,7 @@
 	</div>
 
 	<div class="scroll" bind:this={scroller}>
-		<div class="body" style="--hh:{HH}px; height:{HH * 24}px">
+		<div class="body" style="--hh:{HH}px; height:{HH * 24}px; grid-template-columns:{gridCols}">
 			<div class="gutter">
 				{#each HOURS as h (h)}
 					<div class="hourlabel" style="top:{h * HH}px">
@@ -122,7 +151,7 @@
 				{/each}
 			</div>
 
-			{#each days as day (dayKey(day))}
+			{#each visibleDays as day (dayKey(day))}
 				{@const key = dayKey(day)}
 				<section
 					class="col"
@@ -181,19 +210,23 @@
 		margin: 0;
 		font-weight: 500;
 	}
-	.weeknav {
+	.nav {
 		display: flex;
 		gap: 0.25rem;
 	}
-	.weeknav button {
+	.nav button {
 		border: 1px solid #ccc;
 		background: #fff;
 		border-radius: 6px;
 		padding: 0.3rem 0.7rem;
 		cursor: pointer;
+		font: inherit;
 	}
-	.weeknav button:hover {
+	.nav button:hover {
 		background: #f3f3f3;
+	}
+	.nav .label {
+		min-width: 9rem;
 	}
 	.home {
 		margin-left: auto;
@@ -207,12 +240,10 @@
 		margin: 0 0 0.5rem;
 	}
 
-	/* Column template shared by the day header row and the scrolling body so
-	   they stay aligned. First track is the time gutter. */
+	/* grid-template-columns is set inline so it can vary with column count. */
 	.daysrow,
 	.body {
 		display: grid;
-		grid-template-columns: 3.5rem repeat(7, 1fr);
 	}
 	.daysrow {
 		flex: none;
@@ -234,9 +265,7 @@
 	.dayhead .date {
 		color: #333;
 	}
-	.dayhead.istoday {
-		color: #b00020;
-	}
+	.dayhead.istoday,
 	.dayhead.istoday .date {
 		color: #b00020;
 	}
@@ -264,7 +293,6 @@
 	.col {
 		position: relative;
 		border-left: 1px solid #eee;
-		/* hour guide lines */
 		background-image: linear-gradient(to bottom, #ececec 1px, transparent 1px);
 		background-size: 100% var(--hh);
 	}
