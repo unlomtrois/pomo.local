@@ -313,7 +313,15 @@ func (s *Server) handleList(w http.ResponseWriter, r *http.Request) {
 			limit = n
 		}
 	}
-	sessions, err := s.store.ListSessions(r.Context(), limit)
+
+	// ?project=<ext_id> scopes the list to a single project (used by `pomo log`).
+	var sessions []*store.Session
+	var err error
+	if proj := r.URL.Query().Get("project"); proj != "" {
+		sessions, err = s.store.ListSessionsByProject(r.Context(), proj, limit)
+	} else {
+		sessions, err = s.store.ListSessions(r.Context(), limit)
+	}
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

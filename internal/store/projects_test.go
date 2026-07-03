@@ -33,6 +33,40 @@ func TestUpsertProjectIdempotent(t *testing.T) {
 	}
 }
 
+func TestListSessionsByProject(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+
+	pa, _ := st.UpsertProject(ctx, "ext-a", "A")
+	pb, _ := st.UpsertProject(ctx, "ext-b", "B")
+
+	mk := func(topic string, pid int64) {
+		if _, err := st.StartSession(ctx, StartParams{Topic: topic, Duration: time.Minute, Source: "cli", ProjectID: &pid}); err != nil {
+			t.Fatal(err)
+		}
+		if err := st.FinishActiveSession(ctx, StatusDone); err != nil {
+			t.Fatal(err)
+		}
+	}
+	mk("a1", pa)
+	mk("a2", pa)
+	mk("b1", pb)
+
+	a, err := st.ListSessionsByProject(ctx, "ext-a", 50)
+	if err != nil {
+		t.Fatalf("list a: %v", err)
+	}
+	if len(a) != 2 {
+		t.Fatalf("project A: got %d sessions, want 2", len(a))
+	}
+
+	// Unknown ext id → no rows (not an error).
+	none, err := st.ListSessionsByProject(ctx, "ext-missing", 50)
+	if err != nil || len(none) != 0 {
+		t.Fatalf("unknown project: got %d sessions, err %v", len(none), err)
+	}
+}
+
 func TestStartSessionWithProject(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()

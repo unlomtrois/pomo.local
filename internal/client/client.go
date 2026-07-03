@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -232,9 +233,13 @@ func (c *Client) DeleteByHash(ctx context.Context, prefix string) (*Session, err
 	}
 }
 
-// ListSessions returns recent sessions, newest first.
-func (c *Client) ListSessions(ctx context.Context, limit int) ([]Session, error) {
+// ListSessions returns recent sessions, newest first. A non-empty projectExtID
+// scopes the list to that project.
+func (c *Client) ListSessions(ctx context.Context, limit int, projectExtID string) ([]Session, error) {
 	path := fmt.Sprintf("/api/sessions?limit=%d", limit)
+	if projectExtID != "" {
+		path += "&project=" + url.QueryEscape(projectExtID)
+	}
 	var sessions []Session
 	if err := c.do(ctx, http.MethodGet, path, nil, &sessions); err != nil {
 		return nil, err

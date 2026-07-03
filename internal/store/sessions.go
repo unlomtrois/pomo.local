@@ -312,6 +312,34 @@ func (s *Store) ListSessions(ctx context.Context, limit int) ([]*Session, error)
 	return out, rows.Err()
 }
 
+// ListSessionsByProject returns recent sessions belonging to the project with
+// the given external id (from .pomo), newest first. An unknown ext id yields no
+// rows (the subquery resolves to NULL, matching no project_id).
+func (s *Store) ListSessionsByProject(ctx context.Context, extID string, limit int) ([]*Session, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, hash, topic, project_id, start_time, stop_time, duration, status, source, message, hint, email, open
+		 FROM sessions
+		 WHERE project_id = (SELECT id FROM projects WHERE ext_id = ?)
+		 ORDER BY start_time DESC LIMIT ?`, extID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list sessions by project: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []*Session
+	for rows.Next() {
+		sess, err := scanSession(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, sess)
+	}
+	return out, rows.Err()
+}
+
 // rowScanner is satisfied by both *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
