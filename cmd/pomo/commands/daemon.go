@@ -30,6 +30,12 @@ var daemonCmd = &cobra.Command{
 	RunE: runDaemon,
 }
 
+var daemonStopCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "Stop the running daemon (the one auto-started by any command)",
+	RunE:  runDaemonStop,
+}
+
 func init() {
 	rootCmd.AddCommand(daemonCmd)
 
@@ -37,6 +43,25 @@ func init() {
 	daemonCmd.Flags().Bool("mdns", false, "Advertise <host>.local via mDNS and bind all interfaces")
 	daemonCmd.Flags().String("host", "pomo", "mDNS hostname (advertised as <host>.local)")
 	daemonCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
+
+	daemonCmd.AddCommand(daemonStopCmd)
+}
+
+func runDaemonStop(_ *cobra.Command, _ []string) error {
+	addr := client.DefaultAddr()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	c := client.New(addr)
+	if err := c.Health(ctx); err != nil {
+		fmt.Printf("no daemon running at %s\n", addr)
+		return nil
+	}
+	if err := c.Shutdown(ctx); err != nil {
+		return fmt.Errorf("failed to stop daemon: %w", err)
+	}
+	fmt.Printf("daemon stopped (%s)\n", addr)
+	return nil
 }
 
 func runDaemon(cmd *cobra.Command, _ []string) error {
@@ -114,6 +139,8 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 		return privilegedPortHint(addr, err)
 	case <-ctx.Done():
 		slog.Info("shutdown signal received")
+	case <-srv.ShutdownRequested():
+		slog.Info("shutdown requested via API")
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

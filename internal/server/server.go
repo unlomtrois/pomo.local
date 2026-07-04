@@ -33,6 +33,9 @@ type Server struct {
 
 	mu     sync.Mutex
 	timers map[int64]*time.Timer // session id -> pending completion timer
+
+	shutdownOnce sync.Once
+	shutdownCh   chan struct{}
 }
 
 // New constructs a Server. Passing a nil notifier falls back to libnotify.
@@ -41,11 +44,18 @@ func New(st *store.Store, n Notifier, version string) *Server {
 		n = &notifier.LibnotifyNotifier{}
 	}
 	return &Server{
-		store:    st,
-		notifier: n,
-		version:  version,
-		timers:   make(map[int64]*time.Timer),
+		store:      st,
+		notifier:   n,
+		version:    version,
+		timers:     make(map[int64]*time.Timer),
+		shutdownCh: make(chan struct{}),
 	}
+}
+
+// ShutdownRequested is closed when a client asks the daemon to stop (via
+// POST /api/shutdown); the daemon selects on it to begin graceful shutdown.
+func (s *Server) ShutdownRequested() <-chan struct{} {
+	return s.shutdownCh
 }
 
 // Handler returns the HTTP routes for the daemon.
@@ -53,6 +63,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.handleHealth)
 	mux.HandleFunc("GET /api/stats", s.handleStats)
+	mux.HandleFunc("POST /api/shutdown", s.handleShutdown)
 	mux.HandleFunc("POST /api/sessions", s.handleStart)
 	mux.HandleFunc("GET /api/sessions", s.handleList)
 	mux.HandleFunc("GET /api/sessions/by-hash/{prefix}", s.handleByHash)

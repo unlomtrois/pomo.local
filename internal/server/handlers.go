@@ -27,6 +27,14 @@ func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// handleShutdown acknowledges then signals the daemon to stop gracefully. The
+// response is written before signalling; graceful shutdown waits for this
+// request to finish, so the client still receives the 200.
+func (s *Server) handleShutdown(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "stopping"})
+	s.shutdownOnce.Do(func() { close(s.shutdownCh) })
+}
+
 // statsResponse bundles daemon version, DB aggregates, and the active session.
 type statsResponse struct {
 	Version  string         `json:"version"`

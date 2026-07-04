@@ -114,6 +114,11 @@ func (c *Client) Status(ctx context.Context) (*StatusInfo, error) {
 	return &info, nil
 }
 
+// Shutdown asks the daemon to stop gracefully.
+func (c *Client) Shutdown(ctx context.Context) error {
+	return c.do(ctx, http.MethodPost, "/api/shutdown", nil, nil)
+}
+
 // Health reports whether the daemon is reachable and healthy.
 func (c *Client) Health(ctx context.Context) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base+"/healthz", nil)
