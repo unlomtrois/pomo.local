@@ -73,19 +73,40 @@ func runDaemonStop(_ *cobra.Command, _ []string) error {
 // daemonState is the runtime record of a running daemon.
 type daemonState struct {
 	Addr string `json:"addr"`
+	URL  string `json:"url"` // browser URL (pomo.local when mDNS is on)
 	PID  int    `json:"pid"`
 }
 
-func writeDaemonState(addr string) {
+func writeDaemonState(addr, url string) {
 	path, err := xdg.StateFile("pomo/daemon.json")
 	if err != nil {
 		return
 	}
-	data, err := json.Marshal(daemonState{Addr: addr, PID: os.Getpid()})
+	data, err := json.Marshal(daemonState{Addr: addr, URL: url, PID: os.Getpid()})
 	if err != nil {
 		return
 	}
 	_ = os.WriteFile(path, data, 0644)
+}
+
+// browserURL builds the URL to open in a browser: the mDNS host when advertised,
+// otherwise a loopback host; the port is omitted for :80.
+func browserURL(addr string, mdnsOn bool, mdnsHost string) string {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "http://" + addr
+	}
+	switch {
+	case mdnsOn:
+		host = mdnsHost + ".local"
+	case host == "" || host == "0.0.0.0" || host == "::":
+		host = "127.0.0.1"
+	}
+	u := "http://" + host
+	if port != "" && port != "80" {
+		u += ":" + port
+	}
+	return u
 }
 
 func readDaemonState() (*daemonState, bool) {
@@ -150,9 +171,10 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 		slog.Error("reconcile failed", "err", err)
 	}
 
-	// Record where we're actually listening so `pomo daemon stop` can find us
-	// regardless of how we were started; cleaned up on any exit.
-	writeDaemonState(addr)
+	// Record where we're actually listening (and the browser URL) so
+	// `pomo daemon stop` and `pomo web` can find us regardless of how we were
+	// started; cleaned up on any exit.
+	writeDaemonState(addr, browserURL(addr, mdnsOn, mdnsHost))
 	defer removeDaemonState()
 
 	httpServer := &http.Server{

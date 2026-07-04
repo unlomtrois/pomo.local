@@ -21,7 +21,7 @@ var commandGroups = map[string]string{
 	"init": "project",
 	// Daemon & configuration.
 	"daemon": "system", "status": "system", "settings": "system",
-	"auth": "system", "notify": "system",
+	"web": "system", "auth": "system", "notify": "system",
 }
 
 func assignGroups() {
