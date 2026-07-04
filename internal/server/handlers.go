@@ -27,6 +27,29 @@ func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// statsResponse bundles daemon version, DB aggregates, and the active session.
+type statsResponse struct {
+	Version  string         `json:"version"`
+	Sessions *store.Stats   `json:"sessions"`
+	Active   *store.Session `json:"active"`
+}
+
+func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
+	stats, err := s.store.Stats(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	active, err := s.store.ActiveSession(r.Context())
+	if errors.Is(err, store.ErrNoActive) {
+		active = nil
+	} else if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, statsResponse{Version: s.version, Sessions: stats, Active: active})
+}
+
 func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 	var req startRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

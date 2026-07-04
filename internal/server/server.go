@@ -29,19 +29,21 @@ type Notifier interface {
 type Server struct {
 	store    *store.Store
 	notifier Notifier
+	version  string
 
 	mu     sync.Mutex
 	timers map[int64]*time.Timer // session id -> pending completion timer
 }
 
 // New constructs a Server. Passing a nil notifier falls back to libnotify.
-func New(st *store.Store, n Notifier) *Server {
+func New(st *store.Store, n Notifier, version string) *Server {
 	if n == nil {
 		n = &notifier.LibnotifyNotifier{}
 	}
 	return &Server{
 		store:    st,
 		notifier: n,
+		version:  version,
 		timers:   make(map[int64]*time.Timer),
 	}
 }
@@ -50,6 +52,7 @@ func New(st *store.Store, n Notifier) *Server {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.handleHealth)
+	mux.HandleFunc("GET /api/stats", s.handleStats)
 	mux.HandleFunc("POST /api/sessions", s.handleStart)
 	mux.HandleFunc("GET /api/sessions", s.handleList)
 	mux.HandleFunc("GET /api/sessions/by-hash/{prefix}", s.handleByHash)

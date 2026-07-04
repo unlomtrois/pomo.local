@@ -68,7 +68,7 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	defer func() { _ = st.Close() }()
 	slog.Info("store opened", "path", dbPath)
 
-	srv := server.New(st, nil)
+	srv := server.New(st, nil, rootCmd.Version)
 
 	// Signal-aware context: Ctrl-C / SIGTERM (systemd stop) trigger shutdown.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

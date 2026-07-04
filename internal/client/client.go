@@ -69,6 +69,30 @@ func New(addr string) *Client {
 	}
 }
 
+// Stats mirrors the daemon's DB aggregate summary.
+type Stats struct {
+	TotalSessions int            `json:"total_sessions"`
+	ByStatus      map[string]int `json:"by_status"`
+	Projects      int            `json:"projects"`
+	TrackedNanos  int64          `json:"tracked_nanos"`
+}
+
+// StatusInfo is the daemon status: version, DB stats, and active session.
+type StatusInfo struct {
+	Version  string   `json:"version"`
+	Sessions Stats    `json:"sessions"`
+	Active   *Session `json:"active"`
+}
+
+// Status fetches the daemon's version and DB summary.
+func (c *Client) Status(ctx context.Context) (*StatusInfo, error) {
+	var info StatusInfo
+	if err := c.do(ctx, http.MethodGet, "/api/stats", nil, &info); err != nil {
+		return nil, err
+	}
+	return &info, nil
+}
+
 // Health reports whether the daemon is reachable and healthy.
 func (c *Client) Health(ctx context.Context) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base+"/healthz", nil)
