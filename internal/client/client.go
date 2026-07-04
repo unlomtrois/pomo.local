@@ -9,14 +9,22 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 )
 
-// DefaultAddr is the daemon's default listen/dial address. It is shared by the
-// daemon command and its clients so they agree without configuration.
-const DefaultAddr = "127.0.0.1:7420"
+// DefaultAddr is the daemon's listen/dial address, shared by the daemon command
+// and its clients so they agree. Overridable via $POMO_ADDR (e.g. ":80" so
+// pomo.local needs no port in the URL).
+func DefaultAddr() string {
+	if v := os.Getenv("POMO_ADDR"); v != "" {
+		return v
+	}
+	return "127.0.0.1:7420"
+}
 
 // Sentinel errors mirroring the daemon's status codes.
 var (
@@ -64,9 +72,22 @@ type Client struct {
 // New returns a Client for the daemon at addr (host:port).
 func New(addr string) *Client {
 	return &Client{
-		base: "http://" + addr,
+		base: "http://" + dialHost(addr),
 		http: &http.Client{Timeout: 5 * time.Second},
 	}
+}
+
+// dialHost makes a listen address dialable: a wildcard/empty host (":80",
+// "0.0.0.0:80", "[::]:80") becomes 127.0.0.1 for connecting from this machine.
+func dialHost(addr string) string {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr
+	}
+	if host == "" || host == "0.0.0.0" || host == "::" {
+		host = "127.0.0.1"
+	}
+	return net.JoinHostPort(host, port)
 }
 
 // Stats mirrors the daemon's DB aggregate summary.

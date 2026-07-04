@@ -23,7 +23,7 @@ func init() {
 
 func runRm(_ *cobra.Command, args []string) error {
 	ctx := context.Background()
-	c, err := ensureDaemon(ctx, client.DefaultAddr)
+	c, err := ensureDaemon(ctx, client.DefaultAddr())
 	if err != nil {
 		return err
 	}

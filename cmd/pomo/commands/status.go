@@ -38,9 +38,9 @@ func runStatus(_ *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	c := client.New(client.DefaultAddr)
+	c := client.New(client.DefaultAddr())
 	if err := c.Health(ctx); err != nil {
-		fmt.Printf("daemon    not running at %s\n", client.DefaultAddr)
+		fmt.Printf("daemon    not running at %s\n", client.DefaultAddr())
 		fmt.Println("          (any pomo command auto-spawns it; or run `pomo daemon`)")
 		return nil
 	}
@@ -48,7 +48,7 @@ func runStatus(_ *cobra.Command, _ []string) error {
 	info, err := c.Status(ctx)
 	if err != nil {
 		// Reachable but stats failed (e.g. older daemon without /api/stats).
-		fmt.Printf("daemon    running at %s (stats unavailable: %v)\n", client.DefaultAddr, err)
+		fmt.Printf("daemon    running at %s (stats unavailable: %v)\n", client.DefaultAddr(), err)
 		return nil
 	}
 
@@ -56,7 +56,7 @@ func runStatus(_ *cobra.Command, _ []string) error {
 	if version == "" {
 		version = "unknown"
 	}
-	fmt.Printf("daemon    running (%s) at %s\n", version, client.DefaultAddr)
+	fmt.Printf("daemon    running (%s) at %s\n", version, client.DefaultAddr())
 	fmt.Printf("sessions  %d total", info.Sessions.TotalSessions)
 	if s := info.Sessions.ByStatus; len(s) > 0 {
 		fmt.Printf(" — %d done, %d cancelled, %d active",

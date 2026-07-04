@@ -54,7 +54,7 @@ func runDoro(cmd *cobra.Command, args []string) error {
 func executeStart(topic, message string, duration time.Duration, hint string, useEmail bool) error {
 	ctx := context.Background()
 
-	c, err := ensureDaemon(ctx, client.DefaultAddr)
+	c, err := ensureDaemon(ctx, client.DefaultAddr())
 	if err != nil {
 		return err
 	}

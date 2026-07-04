@@ -30,7 +30,7 @@ func runLog(cmd *cobra.Command, _ []string) error {
 	all, _ := cmd.Flags().GetBool("all")
 
 	ctx := context.Background()
-	c, err := ensureDaemon(ctx, client.DefaultAddr)
+	c, err := ensureDaemon(ctx, client.DefaultAddr())
 	if err != nil {
 		return err
 	}

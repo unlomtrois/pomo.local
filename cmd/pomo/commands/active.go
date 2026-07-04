@@ -32,7 +32,7 @@ func runActive(cmd *cobra.Command, _ []string) error {
 	remove, _ := cmd.Flags().GetBool("remove")
 
 	ctx := context.Background()
-	c, err := ensureDaemon(ctx, client.DefaultAddr)
+	c, err := ensureDaemon(ctx, client.DefaultAddr())
 	if err != nil {
 		return err
 	}

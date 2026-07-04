@@ -33,7 +33,7 @@ var daemonCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(daemonCmd)
 
-	daemonCmd.Flags().StringP("addr", "a", client.DefaultAddr, "Address to listen on")
+	daemonCmd.Flags().StringP("addr", "a", client.DefaultAddr(), "Address to listen on")
 	daemonCmd.Flags().Bool("mdns", false, "Advertise <host>.local via mDNS and bind all interfaces")
 	daemonCmd.Flags().String("host", "pomo", "mDNS hostname (advertised as <host>.local)")
 	daemonCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
