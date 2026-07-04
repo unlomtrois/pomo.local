@@ -1,49 +1,57 @@
-# Simple pomodoro cli
+# pomo
 
-It sends notifications using `libnotify` and schedules them using `systemd-run` or `at` (if no systemd).
+A Pomodoro timer for the terminal. It notifies you when a session ends, on your
+desktop and optionally by email. A background daemon keeps timers running after
+the command exits; the first command you run starts it.
 
-```sh
-pomo doro "working on something" # starts 25 minute session
-```
-
-```sh
-pomo doro "very big task" -d 1h # you can control duration 
-```
+Mark a folder as a project (like `git init`) so time spent there is tagged to it:
 
 ```sh
-pomo doro "deep work" --long # 50 minute session (long pomodoro)
+pomo init
 ```
+
+Start a fixed session:
 
 ```sh
-pomo doro # you can skip args
+pomo doro "working on something" # 25 minutes
+pomo doro "deep work" --long     # 50 minutes
+pomo doro "big task" -d 1h        # custom length
+pomo doro                         # topic optional
 ```
+
+Open-ended stopwatch, name it whenever:
 
 ```sh
-pomo start "refactoring"   # open-ended stopwatch (no fixed timer)
-pomo end                   # ...stop it later; records how long it ran
+pomo start "refactoring"        # start
+pomo end                        # stop, records elapsed time
+
+pomo start                      # start without a topic
+pomo end "fixed the flaky test" # name it at the end (end/stop are aliases)
 ```
+
+Take a break:
 
 ```sh
-pomo start                 # don't know the label yet? start bare
-pomo end "fixed the flaky test"   # ...name it when you finish (end/stop are aliases)
+pomo rest              # 5 minutes
+pomo rest -d 30m --email # get an email when it's over
 ```
+
+Session lengths are configurable:
 
 ```sh
-pomo rest # alias for pomo doro "Break" -m "Break is over, get back to work\!" -d 5m
+pomo settings        # show current durations
+pomo settings --init # write a file to edit
 ```
+
+Email needs SMTP details set once (passwords go to the system keyring):
 
 ```sh
-pomo rest -d 30m --email # you can email yourself when break is over (useful when your phone notifies you when you are at lunch) 
+pomo auth --email
 ```
 
-```sh
-pomo auth --email # but you need to fill email config first 
-```
+## Features
 
-## features
-
-- [x] desktop notifications
-- [x] email notifications
-- [ ] toggl integration
-
-Tailored for Linux
+- Desktop notifications
+- Email notifications
+- Projects and session history (`pomo log`, `show`, `edit`)
+- Web dashboard and calendar served by the daemon
