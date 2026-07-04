@@ -11,6 +11,10 @@ pomo doro "very big task" -d 1h # you can control duration
 ```
 
 ```sh
+pomo doro "deep work" --long # 50 minute session (long pomodoro)
+```
+
+```sh
 pomo doro # you can skip args
 ```
 

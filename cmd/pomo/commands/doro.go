@@ -26,6 +26,7 @@ func init() {
 
 	doroCmd.Flags().StringP("message", "m", "Pomodoro session is ended!", "Notification message")
 	doroCmd.Flags().DurationP("duration", "d", 25*time.Minute, "Timer duration")
+	doroCmd.Flags().Bool("long", false, "Long pomodoro session (50m); --duration overrides")
 	doroCmd.Flags().String("hint", utils.HintDefault, "Hint the same as notify-send hint")
 	doroCmd.Flags().Bool("email", false, "Send email when the session is over")
 	doroCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
@@ -45,6 +46,11 @@ func runDoro(cmd *cobra.Command, args []string) error {
 	duration, _ := cmd.Flags().GetDuration("duration")
 	hint, _ := cmd.Flags().GetString("hint")
 	useEmail, _ := cmd.Flags().GetBool("email")
+
+	// --long is a 50m preset; an explicit --duration still wins.
+	if long, _ := cmd.Flags().GetBool("long"); long && !cmd.Flags().Changed("duration") {
+		duration = 50 * time.Minute
+	}
 
 	return executeStart(topic, message, duration, hint, useEmail)
 }
