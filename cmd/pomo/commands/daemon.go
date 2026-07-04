@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -48,7 +49,12 @@ func init() {
 }
 
 func runDaemonStop(_ *cobra.Command, _ []string) error {
+	// Prefer the address the running daemon recorded; fall back to the default.
 	addr := client.DefaultAddr()
+	if st, ok := readDaemonState(); ok {
+		addr = st.Addr
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -62,6 +68,46 @@ func runDaemonStop(_ *cobra.Command, _ []string) error {
 	}
 	fmt.Printf("daemon stopped (%s)\n", addr)
 	return nil
+}
+
+// daemonState is the runtime record of a running daemon.
+type daemonState struct {
+	Addr string `json:"addr"`
+	PID  int    `json:"pid"`
+}
+
+func writeDaemonState(addr string) {
+	path, err := xdg.StateFile("pomo/daemon.json")
+	if err != nil {
+		return
+	}
+	data, err := json.Marshal(daemonState{Addr: addr, PID: os.Getpid()})
+	if err != nil {
+		return
+	}
+	_ = os.WriteFile(path, data, 0644)
+}
+
+func readDaemonState() (*daemonState, bool) {
+	path, err := xdg.SearchStateFile("pomo/daemon.json")
+	if err != nil {
+		return nil, false
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, false
+	}
+	var st daemonState
+	if json.Unmarshal(data, &st) != nil || st.Addr == "" {
+		return nil, false
+	}
+	return &st, true
+}
+
+func removeDaemonState() {
+	if path, err := xdg.SearchStateFile("pomo/daemon.json"); err == nil {
+		_ = os.Remove(path)
+	}
 }
 
 func runDaemon(cmd *cobra.Command, _ []string) error {
@@ -103,6 +149,11 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	if err := srv.Reconcile(ctx); err != nil {
 		slog.Error("reconcile failed", "err", err)
 	}
+
+	// Record where we're actually listening so `pomo daemon stop` can find us
+	// regardless of how we were started; cleaned up on any exit.
+	writeDaemonState(addr)
+	defer removeDaemonState()
 
 	httpServer := &http.Server{
 		Addr:              addr,
