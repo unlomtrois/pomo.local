@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"pomo.local/internal/client"
+	"pomo.local/internal/config"
 	"pomo.local/internal/project"
 	"pomo.local/internal/utils"
 )
@@ -24,9 +25,10 @@ var doroCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(doroCmd)
 
+	s := config.LoadSettings()
 	doroCmd.Flags().StringP("message", "m", "Pomodoro session is ended!", "Notification message")
-	doroCmd.Flags().DurationP("duration", "d", 25*time.Minute, "Timer duration")
-	doroCmd.Flags().Bool("long", false, "Long pomodoro session (50m); --duration overrides")
+	doroCmd.Flags().DurationP("duration", "d", s.DoroDuration.Std(), "Timer duration")
+	doroCmd.Flags().Bool("long", false, fmt.Sprintf("Long pomodoro session (%s); --duration overrides", s.LongDuration.Std()))
 	doroCmd.Flags().String("hint", utils.HintDefault, "Hint the same as notify-send hint")
 	doroCmd.Flags().Bool("email", false, "Send email when the session is over")
 	doroCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
@@ -47,9 +49,9 @@ func runDoro(cmd *cobra.Command, args []string) error {
 	hint, _ := cmd.Flags().GetString("hint")
 	useEmail, _ := cmd.Flags().GetBool("email")
 
-	// --long is a 50m preset; an explicit --duration still wins.
+	// --long is the configured long-session preset; an explicit --duration wins.
 	if long, _ := cmd.Flags().GetBool("long"); long && !cmd.Flags().Changed("duration") {
-		duration = 50 * time.Minute
+		duration = config.LoadSettings().LongDuration.Std()
 	}
 
 	return executeStart(topic, message, duration, hint, useEmail)

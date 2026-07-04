@@ -52,6 +52,7 @@ index** (`sessions.status WHERE status='active'`) rather than a state-file check
   can reproduce the notification, plus `status` and `source` (cli/web/mcp).
 - `$XDG_STATE_HOME/pomo/daemon.log` — stdout/stderr of an auto-spawned daemon.
 - `$XDG_CONFIG_HOME/pomo/mail.json` — SMTP host/port/sender/receiver (`internal/config`).
+- `$XDG_CONFIG_HOME/pomo/settings.json` — configurable durations (`doro_duration`, `long_duration`, `rest_duration`) as human strings ("25m"); `config.LoadSettings` is best-effort (missing file/field → built-in defaults 25m/50m/5m). `doro`/`rest` read these for their flag defaults and `--long`.
 
 ### Commands (`cmd/pomo/commands`)
 
@@ -62,7 +63,8 @@ Cobra-based; each file registers itself onto `rootCmd` in an `init()`. `main.go`
 - `doro [topic]` — start a fixed pomodoro via the daemon; auto-spawns it. Topic is a positional arg (optional, like `start`/`end`). `--email`, `--duration/-d`, `--message/-m`, `--hint`, `--verbose/-v`.
 - `start [topic]` / `end [topic]` (alias `stop`) — open-ended **stopwatch**: `start` opens a session with no fixed stop and no timer (`sessions.open=1`); `end` records actual elapsed time, marks it done, and optionally sets/overrides the topic. Topic is a positional arg and optional on both sides (name at start, at end, or override). Enforced by the same single-active invariant as `doro`. `internal/store.EndActiveSession` computes elapsed = now − start; the daemon skips arming/reconciling timers for `open` sessions.
 - `cancel` — cancel (discard) the active session — doro or open `start` — marking it `cancelled` (vs `end`/`stop` which records it `done`); disarms the timer via `POST /api/sessions/active/stop` (`client.StopActive`). Same effect as `active --remove`.
-- `rest` — thin wrapper calling `executeStart("Rest", ...)` with a 5m default.
+- `settings` — show the configured durations (doro/long/rest); `--init` writes a default `settings.json` to edit.
+- `rest` — thin wrapper calling `executeStart("Rest", ...)`; default duration from `settings.json` (5m).
 - `log` — git-log-style session history, newest first (`GET /api/sessions?project=<ext_id>&limit=N` → `store.ListSessionsByProject`). Scoped to the current `.pomo` project by default; `--all` lists across projects, `-n` limits. Prints `<marker> [hash] <dur> <when> <topic>` (marker: `▶` active, `✗` cancelled).
 - `edit <hash>` — partial update of a past session by hash/prefix (`PATCH /api/sessions/by-hash/{prefix}` → `store.EditSession`). Flags `--topic/-t` (pass `""` to clear), `--start` (RFC3339 / `"2006-01-02 15:04"` / `"15:04"`), `--duration/-d`. Only passed flags change (detected via cobra `Flags().Changed`); keeps `stop = start + duration`; re-arms the timer if the active doro's timing changed.
 - `rm <hash>` (alias `delete`) — delete a session by hash/prefix (`DELETE /api/sessions/by-hash/{prefix}` → `store.DeleteSession`); disarms the timer first if it's the active session.
