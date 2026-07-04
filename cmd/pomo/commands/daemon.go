@@ -41,7 +41,6 @@ func init() {
 	rootCmd.AddCommand(daemonCmd)
 
 	daemonCmd.Flags().StringP("addr", "a", client.DefaultAddr(), "Address to listen on")
-	daemonCmd.Flags().Bool("mdns", false, "Advertise <host>.local via mDNS and bind all interfaces")
 	daemonCmd.Flags().String("host", "pomo", "mDNS hostname (advertised as <host>.local)")
 	daemonCmd.Flags().BoolP("verbose", "v", false, "Verbose output")
 
@@ -89,18 +88,12 @@ func writeDaemonState(addr, url string) {
 	_ = os.WriteFile(path, data, 0644)
 }
 
-// browserURL builds the URL to open in a browser: the mDNS host when advertised,
-// otherwise a loopback host; the port is omitted for :80.
-func browserURL(addr string, mdnsOn bool, mdnsHost string) string {
-	host, port, err := net.SplitHostPort(addr)
+// browserURL builds the URL to open in a browser for the given listen addr and
+// browser host (the .local name when advertised, else loopback); :80 is omitted.
+func browserURL(addr, host string) string {
+	_, port, err := net.SplitHostPort(addr)
 	if err != nil {
-		return "http://" + addr
-	}
-	switch {
-	case mdnsOn:
-		host = mdnsHost + ".local"
-	case host == "" || host == "0.0.0.0" || host == "::":
-		host = "127.0.0.1"
+		return "http://" + host
 	}
 	u := "http://" + host
 	if port != "" && port != "80" {
@@ -137,16 +130,13 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 	addr, _ := cmd.Flags().GetString("addr")
-	mdnsOn, _ := cmd.Flags().GetBool("mdns")
 	mdnsHost, _ := cmd.Flags().GetString("host")
 
-	// mDNS only helps if the daemon accepts connections from the LAN, so when
-	// it's on and we'd otherwise bind loopback-only, listen on all interfaces.
-	if mdnsOn {
-		if host, port, err := net.SplitHostPort(addr); err == nil && isLoopback(host) {
-			addr = net.JoinHostPort("0.0.0.0", port)
-			slog.Info("mdns: binding all interfaces so the .local name is reachable", "addr", addr)
-		}
+	// mDNS is always on: to make <host>.local reachable from the LAN, listen on
+	// all interfaces rather than loopback-only.
+	if host, port, err := net.SplitHostPort(addr); err == nil && isLoopback(host) {
+		addr = net.JoinHostPort("0.0.0.0", port)
+		slog.Info("binding all interfaces so the .local name is reachable", "addr", addr)
 	}
 
 	dbPath, err := xdg.DataFile("pomo/pomo.db")
@@ -171,10 +161,24 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 		slog.Error("reconcile failed", "err", err)
 	}
 
+	// Advertise <host>.local. On success the browser URL is the .local name;
+	// otherwise fall back to loopback so `pomo web` still opens something usable.
+	browserHost := "127.0.0.1"
+	if _, portStr, err := net.SplitHostPort(addr); err == nil {
+		port, _ := strconv.Atoi(portStr)
+		if ad, err := mdns.Advertise(mdnsHost, port); err != nil {
+			slog.Error("mdns advertise failed", "err", err)
+		} else {
+			browserHost = mdnsHost + ".local"
+			defer func() { _ = ad.Close() }()
+			slog.Info("mdns: reachable at", "url", browserURL(addr, browserHost))
+		}
+	}
+
 	// Record where we're actually listening (and the browser URL) so
 	// `pomo daemon stop` and `pomo web` can find us regardless of how we were
 	// started; cleaned up on any exit.
-	writeDaemonState(addr, browserURL(addr, mdnsOn, mdnsHost))
+	writeDaemonState(addr, browserURL(addr, browserHost))
 	defer removeDaemonState()
 
 	httpServer := &http.Server{
@@ -190,22 +194,6 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 			errCh <- err
 		}
 	}()
-
-	if mdnsOn {
-		if _, portStr, err := net.SplitHostPort(addr); err == nil {
-			port, _ := strconv.Atoi(portStr)
-			if ad, err := mdns.Advertise(mdnsHost, port); err != nil {
-				slog.Error("mdns advertise failed", "err", err)
-			} else {
-				url := fmt.Sprintf("http://%s.local", mdnsHost)
-				if port != 80 {
-					url += fmt.Sprintf(":%d", port)
-				}
-				slog.Info("mdns: reachable at", "url", url)
-				defer func() { _ = ad.Close() }()
-			}
-		}
-	}
 
 	select {
 	case err := <-errCh:

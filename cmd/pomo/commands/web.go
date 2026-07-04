@@ -36,7 +36,7 @@ func runWeb(_ *cobra.Command, _ []string) error {
 	if _, err := ensureDaemon(context.Background(), client.DefaultAddr()); err != nil {
 		return err
 	}
-	url := browserURL(client.DefaultAddr(), false, "")
+	url := browserURL(client.DefaultAddr(), "127.0.0.1")
 	if st, ok := readDaemonState(); ok && st.URL != "" {
 		url = st.URL
 	}
@@ -47,7 +47,7 @@ func webURLFromState(st *daemonState) string {
 	if st.URL != "" {
 		return st.URL
 	}
-	return browserURL(st.Addr, false, "")
+	return browserURL(st.Addr, "127.0.0.1")
 }
 
 // openURL opens url in the default browser via xdg-open, printing it either way.
