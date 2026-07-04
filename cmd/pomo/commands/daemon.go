@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
@@ -98,7 +99,11 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 			if ad, err := mdns.Advertise(mdnsHost, port); err != nil {
 				slog.Error("mdns advertise failed", "err", err)
 			} else {
-				slog.Info("mdns: reachable at", "url", fmt.Sprintf("http://%s.local:%d", mdnsHost, port))
+				url := fmt.Sprintf("http://%s.local", mdnsHost)
+				if port != 80 {
+					url += fmt.Sprintf(":%d", port)
+				}
+				slog.Info("mdns: reachable at", "url", url)
 				defer func() { _ = ad.Close() }()
 			}
 		}
@@ -106,7 +111,7 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 
 	select {
 	case err := <-errCh:
-		return err
+		return privilegedPortHint(addr, err)
 	case <-ctx.Done():
 		slog.Info("shutdown signal received")
 	}
@@ -118,6 +123,31 @@ func runDaemon(cmd *cobra.Command, _ []string) error {
 	}
 	slog.Info("daemon stopped")
 	return nil
+}
+
+// privilegedPortHint augments a bind failure on a privileged port (<1024, e.g.
+// :80 so pomo.local needs no port in the URL) with how to grant the permission.
+func privilegedPortHint(addr string, err error) error {
+	if err == nil {
+		return nil
+	}
+	_, portStr, splitErr := net.SplitHostPort(addr)
+	port, _ := strconv.Atoi(portStr)
+	if splitErr != nil || port == 0 || port >= 1024 || !errors.Is(err, os.ErrPermission) {
+		return err
+	}
+	return fmt.Errorf("cannot bind privileged port %d without extra permission: %w\n"+
+		"  grant it once with either:\n"+
+		"    sudo setcap 'cap_net_bind_service=+ep' %s   (per-binary; redo after rebuild)\n"+
+		"    echo 'net.ipv4.ip_unprivileged_port_start=%d' | sudo tee /etc/sysctl.d/50-pomo.conf && sudo sysctl --system",
+		port, err, selfPath(), port)
+}
+
+func selfPath() string {
+	if p, err := os.Executable(); err == nil {
+		return p
+	}
+	return "/path/to/pomo"
 }
 
 func isLoopback(host string) bool {
